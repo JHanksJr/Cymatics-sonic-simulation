@@ -7,50 +7,73 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
 <style>
   *{margin:0;padding:0;box-sizing:border-box}
+  :root{
+    --neon-a:#00ff88;
+    --neon-b:#00ccff;
+    --glass:rgba(255,255,255,.08);
+    --border:rgba(255,255,255,.12);
+  }
   body{
     font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
-    background:linear-gradient(135deg,#0c0c0c 0%,#1a1a2e 50%,#16213e 100%);
-    color:#fff;overflow-x:hidden;min-height:100vh
+    background:radial-gradient(1200px 1200px at 10% 10%,#0b1220 0%,#060910 35%,#04060a 60%, #000 100%);
+    color:#eafaff;overflow-x:hidden;min-height:100vh
   }
-  .container{display:flex;flex-direction:column;align-items:center;padding:20px;gap:14px}
+  .container{display:flex;flex-direction:column;align-items:center;padding:24px;gap:16px}
   .header{text-align:center;margin-bottom:6px;animation:glow 2s ease-in-out infinite alternate}
-  @keyframes glow{from{text-shadow:0 0 10px #00ff88,0 0 20px #00ff88}to{text-shadow:0 0 20px #00ff88,0 0 30px #00ff88}}
-  .header h1{font-size:2.2rem;margin-bottom:8px;background:linear-gradient(45deg,#00ff88,#00ccff);
-    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-  .header p{font-size:1.0rem;opacity:.85;max-width:900px}
+  @keyframes glow{
+    from{ text-shadow:0 0 10px var(--neon-a),0 0 20px var(--neon-a) }
+    to  { text-shadow:0 0 18px var(--neon-b),0 0 32px var(--neon-b) }
+  }
+  .header h1{
+    font-size:2.3rem;margin-bottom:8px;
+    background:conic-gradient(from 0deg at 50% 50%, var(--neon-a), var(--neon-b), var(--neon-a));
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent
+  }
+  .header p{font-size:1.0rem;opacity:.85;max-width:960px}
   .unlock{margin-top:8px;font-size:.95rem;opacity:.8}
-  .visualization-container{position:relative;border-radius:20px;overflow:hidden;
-    box-shadow:0 20px 40px rgba(0,255,136,.2);background:rgba(255,255,255,.05);backdrop-filter:blur(10px)}
-  #canvas{display:block;background:radial-gradient(circle at center,#111 0%,#000 100%);border-radius:20px}
-  .frequency-display{font-size:1.2rem;font-weight:800;color:#00ff88;text-align:center; text-shadow:0 0 10px rgba(0,255,136,.5)}
-  .controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;max-width:1200px;width:100%}
-  .control-group{background:rgba(255,255,255,.1);padding:18px;border-radius:15px;backdrop-filter:blur(10px);
-    border:1px solid rgba(255,255,255,.12);transition:all .25s ease}
-  .control-group:hover{transform:translateY(-3px);box-shadow:0 10px 25px rgba(0,255,136,.18)}
-  .control-group h3{margin-bottom:10px;color:#00ff88;font-size:1.05rem}
+
+  .visualization-container{
+    position:relative;border-radius:20px;overflow:hidden;
+    box-shadow:0 24px 50px rgba(0,255,136,.18), inset 0 0 0 1px rgba(255,255,255,.05);
+    background:linear-gradient(135deg, rgba(0,0,0,.35), rgba(0,0,0,.15));
+    backdrop-filter:blur(10px)
+  }
+  #canvas{display:block;background:radial-gradient(circle at center,#0b0f1a 0%,#03060c 100%);border-radius:20px}
+
+  .frequency-display{font-size:1.1rem;font-weight:800;color:var(--neon-a);text-align:center;text-shadow:0 0 10px rgba(0,255,136,.5)}
+
+  .controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px;max-width:1200px;width:100%}
+  .control-group{
+    background:var(--glass);padding:18px;border-radius:16px;backdrop-filter:blur(10px);
+    border:1px solid var(--border);transition:all .25s ease
+  }
+  .control-group:hover{transform:translateY(-3px);box-shadow:0 12px 26px rgba(0,255,136,.15)}
+  .control-group h3{margin-bottom:10px;color:var(--neon-a);font-size:1.05rem}
   .row{display:flex;gap:10px;flex-wrap:wrap}
+
   .slider-container{margin-bottom:12px}
   .slider-container label{display:flex;justify-content:space-between;margin-bottom:6px;font-weight:600;gap:10px}
-  .slider{width:100%;-webkit-appearance:none;height:8px;background:linear-gradient(90deg,#333,#666);
-    border-radius:5px;outline:none;margin-bottom:6px}
-  .slider::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;background:linear-gradient(45deg,#00ff88,#00ccff);
-    border-radius:50%;cursor:pointer;box-shadow:0 0 10px rgba(0,255,136,.5)}
-  .slider::-moz-range-thumb{width:18px;height:18px;background:linear-gradient(45deg,#00ff88,#00ccff);
-    border-radius:50%;cursor:pointer;box-shadow:0 0 10px rgba(0,255,136,.5);border:none}
   .value-display{text-align:right;font-size:.9rem;opacity:.9}
-  select, .select{width:100%;padding:8px;border-radius:10px;border:none;background:#0f1a2c;color:#cfe;
-    outline:1px solid rgba(255,255,255,.12)}
-  button{background:linear-gradient(45deg,#00ff88,#00ccff);color:#000;border:none;padding:10px 16px;border-radius:22px;
-    cursor:pointer;font-size:.95rem;font-weight:700;transition:all .2s ease}
-  button:hover{transform:translateY(-1px);box-shadow:0 5px 15px rgba(0,255,136,.35)}
+
+  .slider{width:100%;-webkit-appearance:none;height:8px;background:linear-gradient(90deg,#2b2f3a,#4b5266);border-radius:5px;outline:none;margin-bottom:6px}
+  .slider::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;background:linear-gradient(45deg,var(--neon-a),var(--neon-b));border-radius:50%;cursor:pointer;box-shadow:0 0 10px rgba(0,255,136,.5)}
+  .slider::-moz-range-thumb{width:18px;height:18px;background:linear-gradient(45deg,var(--neon-a),var(--neon-b));border-radius:50%;cursor:pointer;box-shadow:0 0 10px rgba(0,255,136,.5);border:none}
+
+  select, .select{width:100%;padding:9px 10px;border-radius:10px;border:none;background:#0f1a2c;color:#cfe;outline:1px solid var(--border)}
+
+  button{
+    background:linear-gradient(45deg,var(--neon-a),var(--neon-b));color:#001314;border:none;padding:10px 16px;border-radius:22px;
+    cursor:pointer;font-size:.95rem;font-weight:700;transition:transform .2s ease, box-shadow .2s ease
+  }
+  button:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(0,255,136,.35)}
   button:disabled{opacity:.5;cursor:not-allowed;transform:none}
-  .pattern-buttons,.preset-buttons{display:flex;flex-wrap:wrap;gap:8px}
-  .chip{background:#0f1a2c;border:1px solid rgba(255,255,255,.15);color:#cfe}
-  .chip.active{outline:2px solid #00ff88;transform:scale(1.03)}
-  .info-panel{background:rgba(255,255,255,.1);padding:16px;border-radius:15px;margin-top:8px;max-width:900px;
-    backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.12);line-height:1.55}
-  .muted{opacity:.6}
-  @media (max-width:768px){#canvas{width:350px !important;height:350px !important}.header h1{font-size:1.7rem}}
+  .chip{background:#0f1a2c;border:1px solid var(--border);color:#cfe}
+  .chip.active{outline:2px solid var(--neon-a);transform:scale(1.03)}
+
+  .info-panel{background:var(--glass);padding:16px;border-radius:15px;margin-top:8px;max-width:900px;backdrop-filter:blur(10px);border:1px solid var(--border);line-height:1.55}
+  .muted{opacity:.65}
+
+  @media (max-width:768px){#canvas{width:350px !important;height:350px !important}.header h1{font-size:1.8rem}}
   @media print{body{background:#fff;color:#000}.container{padding:0}.visualization-container,#canvas,.controls{display:none}}
 </style>
 </head>
@@ -63,7 +86,7 @@
   </div>
 
   <div class="visualization-container">
-    <canvas id="canvas" width="520" height="520"></canvas>
+    <canvas id="canvas" width="620" height="620"></canvas>
   </div>
 
   <div class="frequency-display" id="frequencyDisplay">440 Hz (A4)</div>
@@ -115,7 +138,6 @@
       <div class="row">
         <button id="playBtn">▶ Play</button>
         <button id="stopBtn" disabled>⏸ Stop</button>
-        <button id="muteBtn">🔇 Mute</button>
         <button id="sweepBtn" class="chip">⟲ Slow Sweep</button>
         <button id="safeBtn" class="chip">🛡 Safe Mode: Off</button>
         <button id="hapticBtn" class="chip">📳 Haptics: Off</button>
@@ -169,7 +191,7 @@
       </div>
     </div>
 
-    <!-- PATTERNS & TASKS -->
+    <!-- PATTERNS -->
     <div class="control-group">
       <h3>🌀 Pattern Types</h3>
       <div class="pattern-buttons">
@@ -177,17 +199,6 @@
         <button id="circularBtn"     class="chip" onclick="setPattern('circular')">Circular Waves</button>
         <button id="fractalBtn"      class="chip" onclick="setPattern('fractal')">Fractal Pattern</button>
         <button id="interferenceBtn" class="chip" onclick="setPattern('interference')">Wave Interference</button>
-      </div>
-      <hr style="opacity:.2;margin:12px 0">
-      <h3>🧪 Guided Tasks</h3>
-      <ol id="tasks" style="margin-left:18px">
-        <li>Start at 110 Hz and slowly increase. Pause when you notice a 6-fold symmetry. Record the frequency.</li>
-        <li>Enable partials (2×, 3×). Describe how the pattern changes compared to pure sine.</li>
-        <li>Switch Medium to “Water Dish.” How do the boundaries/brightness feel different?</li>
-        <li>Run the Sweep. At what range do patterns change the fastest?</li>
-      </ol>
-      <div class="row" style="margin-top:8px">
-        <button id="printBtn" class="chip">🖨 Print Worksheet</button>
       </div>
     </div>
   </div>
@@ -212,7 +223,7 @@ const waveform = new Tone.Analyser('waveform', 1024);
 masterGain.connect(analyser);
 masterGain.connect(waveform);
 
-let isPlaying = false, isMuted = false, safeMode = false, haptics = false, sweepRunning = false;
+let isPlaying = false, safeMode = false, haptics = false, sweepRunning = false;
 
 async function ensureAudio(){
   if (Tone.context.state !== 'running') {
@@ -245,9 +256,8 @@ const p2 = document.getElementById('p2'), p3 = document.getElementById('p3'), p4
 const p2v = document.getElementById('p2v'), p3v = document.getElementById('p3v'), p4v = document.getElementById('p4v');
 
 const playBtn = document.getElementById('playBtn'), stopBtn=document.getElementById('stopBtn');
-const muteBtn = document.getElementById('muteBtn'), sweepBtn=document.getElementById('sweepBtn');
+const sweepBtn=document.getElementById('sweepBtn');
 const safeBtn = document.getElementById('safeBtn'), hapticBtn=document.getElementById('hapticBtn');
-const printBtn= document.getElementById('printBtn');
 
 const compSlider = document.getElementById('complexity');
 const ampSlider  = document.getElementById('amplitude');
@@ -262,7 +272,6 @@ let complexity = parseInt(compSlider.value,10);
 let amplitude  = parseInt(ampSlider.value,10);
 let animationSpeed = parseFloat(speedSlider.value);
 
-/* ===================== Helpers ===================== */
 function linVol(p){ return Math.max(0, Math.min(1, p/100)); }
 function clamp(v,min,max){ return Math.max(min, Math.min(max,v)); }
 
@@ -284,15 +293,12 @@ function updateFreqDisplays(){
 function snapFrequency(raw){
   const mode = snapSel.value;
   if (mode==='off') return raw;
-  if (mode==='et'){ // equal temperament
+  if (mode==='et'){
     const n = Math.round(12*Math.log2(raw/440));
     return +(440 * Math.pow(2, n/12)).toFixed(2);
   }
-  // Just intonation (A tonic): small ratio set
   const ratios = [1, 9/8, 5/4, 4/3, 3/2, 5/3, 15/8, 2];
   let best = raw, minDiff = Infinity;
-  const aMult = raw/440;
-  // fit nearest power-of-2 octave and ratio
   for (let k=-3;k<=3;k++){
     const base = 440*Math.pow(2,k);
     ratios.forEach(r=>{
@@ -305,11 +311,10 @@ function snapFrequency(raw){
 }
 
 function setMediumParams(){
-  // adjust visual reactivity presets
   const v = mediumSel.value;
   if (v==='metal'){ medium = {damping:0.92, reactivity:1.0, ripple:1.0}; }
   else if (v==='water'){ medium = {damping:0.85, reactivity:1.3, ripple:1.4}; }
-  else { medium = {damping:0.9,  reactivity:1.15, ripple:1.2}; } // drum
+  else { medium = {damping:0.9,  reactivity:1.15, ripple:1.2}; }
 }
 let medium = {damping:0.92, reactivity:1.0, ripple:1.0};
 setMediumParams();
@@ -338,7 +343,6 @@ waveSel.addEventListener('change', e=>{
   [oscFund,osc2,osc3,osc4].forEach(o=>{ if(o) o.type=t; });
 });
 snapSel.addEventListener('change', ()=>{
-  // resnap current
   const f = snapFrequency(parseFloat(freqSlider.value));
   frequency = f; freqSlider.value=f; updateFreqDisplays();
   if (oscFund){ oscFund.frequency.setValueAtTime(f, Tone.now());
@@ -349,12 +353,16 @@ snapSel.addEventListener('change', ()=>{
 });
 mediumSel.addEventListener('change', setMediumParams);
 
+[p2,p3,p4].forEach(()=>{
+  p2v.textContent = `${p2.value}%`;
+  p3v.textContent = `${p3.value}%`;
+  p4v.textContent = `${p4.value}%`;
+});
 [p2,p3,p4].forEach(sl=>{
   sl.addEventListener('input', ()=>{
     p2v.textContent = `${p2.value}%`;
     p3v.textContent = `${p3.value}%`;
     p4v.textContent = `${p4.value}%`;
-    // update gains live
     if (osc2) osc2.volume.value = -12 + (parseInt(p2.value)-50)/5;
     if (osc3) osc3.volume.value = -15 + (parseInt(p3.value)-50)/6;
     if (osc4) osc4.volume.value = -18 + (parseInt(p4.value)-50)/7;
@@ -371,20 +379,16 @@ document.getElementById('presetButtons').addEventListener('click', e=>{
 
 playBtn.addEventListener('click', async ()=>{ await ensureAudio(); startTone(); });
 stopBtn.addEventListener('click', stopTone);
-muteBtn.addEventListener('click', ()=>{
-  isMuted = !isMuted; masterGain.mute = isMuted;
-  muteBtn.textContent = isMuted ? '🔈 Unmute' : '🔇 Mute';
-});
+
 sweepBtn.addEventListener('click', ()=>{ if (!sweepRunning) startSweep(); else sweepRunning=false; });
 safeBtn.addEventListener('click', ()=>{
   safeMode = !safeMode;
   safeBtn.textContent = `🛡 Safe Mode: ${safeMode?'On':'Off'}`;
   if (safeMode){
-    // cap frequency & volume gently
-    freqSlider.max = 5000; // UI safeguard
+    freqSlider.max = 5000;
     masterGain.gain.linearRampToValueAtTime(linVol(parseInt(volSlider.value))*0.6, Tone.now()+0.05);
   } else {
-    freqSlider.max = 20000; // allow if you expand later; UI still shows 2000 default
+    freqSlider.max = 20000;
   }
 });
 hapticBtn.addEventListener('click', ()=>{
@@ -395,8 +399,6 @@ compSlider.addEventListener('input', e=>{ complexity = parseInt(e.target.value,1
 ampSlider.addEventListener('input', e=>{ amplitude = parseInt(e.target.value,10); ampValue.textContent = amplitude; });
 speedSlider.addEventListener('input', e=>{ animationSpeed = parseFloat(e.target.value); speedValue.textContent = animationSpeed.toFixed(1)+'×'; });
 
-printBtn.addEventListener('click', ()=>{ window.print(); });
-
 /* ===================== Tone control ===================== */
 function createOsc(freq, type, volDb){
   const o = new Tone.Oscillator(freq, type);
@@ -406,7 +408,6 @@ function createOsc(freq, type, volDb){
 function startTone(){
   if (isPlaying) return;
 
-  // envelope per oscillator for click-free starts
   envFund = new Tone.AmplitudeEnvelope({attack:0.01,decay:0.05,sustain:0.95,release:0.2});
   env2    = new Tone.AmplitudeEnvelope({attack:0.01,decay:0.07,sustain:0.9, release:0.25});
   env3    = new Tone.AmplitudeEnvelope({attack:0.01,decay:0.08,sustain:0.85,release:0.25});
@@ -448,7 +449,7 @@ function stopTone(){
 function setFrequency(freq){
   let f = snapFrequency(freq);
   frequency = clamp(f, 20, safeMode ? 5000 : 20000);
-  freqSlider.value = Math.min(frequency, 2000); // UI slider range; audio can exceed
+  freqSlider.value = Math.min(frequency, 2000);
   updateFreqDisplays();
   if (oscFund){
     oscFund.frequency.setValueAtTime(frequency, Tone.now());
@@ -467,14 +468,47 @@ async function startSweep(){
     if(!sweepRunning) return;
     const t = performance.now()/1000 - t0;
     const u = clamp(t/dur,0,1);
-    const f = start * Math.pow(end/start, u); // exponential sweep
+    const f = start * Math.pow(end/start, u);
     setFrequency(f);
     if(u<1) requestAnimationFrame(step); else sweepRunning=false;
   }
   requestAnimationFrame(step);
 }
 
-/* ===================== Visual Geometry ===================== */
+/* ===================== Audio Analysis ===================== */
+function getRMS(){
+  const arr = waveform.getValue();
+  if (!arr || !arr.length || arr[0]===undefined) return 0;
+  let sum=0; for (let i=0;i<arr.length;i++) sum += arr[i]*arr[i];
+  return Math.sqrt(sum/arr.length);
+}
+function bandEnergy(centerHz, bwOct=1/6){
+  const spec = analyser.getValue();
+  if (!spec || spec.length===0) return 0;
+  const ny = Tone.getContext().sampleRate/2;
+  const n = spec.length;
+  const lo = centerHz/Math.pow(2,bwOct/2), hi = centerHz*Math.pow(2,bwOct/2);
+  const i0 = Math.max(0, Math.floor((lo/ny)*n));
+  const i1 = Math.min(n-1, Math.ceil((hi/ny)*n));
+  let acc=0,c=0;
+  for (let i=i0;i<=i1;i++){ acc += Math.pow(10, spec[i]/20); c++; }
+  return c? acc/c : 0;
+}
+function spectralCentroid(){
+  const spec = analyser.getValue();
+  if(!spec || !spec.length) return 0;
+  const ny = Tone.getContext().sampleRate/2;
+  let num=0, den=0;
+  for(let i=0;i<spec.length;i++){
+    const f = (i/spec.length)*ny;
+    const lin = Math.pow(10, spec[i]/20);
+    num += f*lin; den += lin;
+  }
+  const c = den? num/den : 0;
+  return clamp(c/ny, 0, 1);
+}
+
+/* ===================== Patterns ===================== */
 function getFlowerOfLifeCircles(cx, cy, baseR, rings){
   const circles=[{x:cx,y:cy,radius:baseR}];
   const add=(count,dist)=>{for(let i=0;i<count;i++){const a=i*2*Math.PI/count;circles.push({x:cx+Math.cos(a)*dist,y:cy+Math.sin(a)*dist,radius:baseR});}};
@@ -494,73 +528,128 @@ function getSacredGeometryPattern(cx, cy, baseR, f, comp){
   return getFlowerOfLifeCircles(cx,cy,baseR*0.75, Math.min(5, comp+1));
 }
 
-/* ===================== Audio→Visual Reactivity ===================== */
-function getRMS(){
-  const arr = waveform.getValue();
-  if (!arr || !arr.length || arr[0]===undefined) return 0;
-  let sum=0; for (let i=0;i<arr.length;i++) sum += arr[i]*arr[i];
-  return Math.sqrt(sum/arr.length); // 0..~1
+/* ===================== Reactive Particle Layer ===================== */
+const particles=[];
+const MAX_PARTICLES = 420;
+function spawnParticles(n){
+  for(let i=0;i<n;i++){
+    const ang = Math.random()*Math.PI*2;
+    const rad = Math.random()* (Math.min(canvas.width,canvas.height)*0.1);
+    particles.push({
+      x:centerX + Math.cos(ang)*rad,
+      y:centerY + Math.sin(ang)*rad,
+      vx:0, vy:0,
+      a:ang,
+      speed: 0.4 + Math.random()*0.6,
+      life: 60 + Math.random()*120,
+      hue: 170 + Math.random()*60
+    });
+  }
 }
-function bandEnergy(centerHz, bwOct=1/6){
-  // approximate energy around a center frequency using FFT bins
-  const spec = analyser.getValue(); // Float32Array in dB
-  if (!spec || spec.length===0) return 0;
-  // Map bin -> freq: bin 0 ~ 0Hz, bin N ~ nyquist (context.sampleRate/2)
-  const ny = Tone.getContext().sampleRate/2;
-  const n = spec.length;
-  const lo = centerHz/Math.pow(2,bwOct/2), hi = centerHz*Math.pow(2,bwOct/2);
-  const i0 = Math.max(0, Math.floor((lo/ny)*n));
-  const i1 = Math.min(n-1, Math.ceil((hi/ny)*n));
-  let acc=0,c=0;
-  for (let i=i0;i<=i1;i++){ acc += Math.pow(10, spec[i]/20); c++; } // back to linear
-  return c? acc/c : 0;
+spawnParticles(180);
+
+function updateParticles(rms, eMain){
+  const targetCount = Math.min(MAX_PARTICLES, 140 + Math.floor(complexity*20) + Math.floor(eMain*180));
+  if (particles.length < targetCount) spawnParticles(targetCount - particles.length);
+
+  for (let i=particles.length-1;i>=0;i--){
+    const p = particles[i];
+    // orbit + jitter modulated by audio
+    p.a += (0.006 + 0.025*rms) * (0.6 + animationSpeed*0.4);
+    const pull = 0.02 + eMain*0.06;
+    const dx = centerX - p.x, dy = centerY - p.y;
+    p.vx += (dx*pull + Math.cos(p.a)*p.speed*(1+eMain*1.8))*0.02;
+    p.vy += (dy*pull + Math.sin(p.a)*p.speed*(1+eMain*1.8))*0.02;
+
+    // slight damping
+    p.vx *= 0.965; p.vy *= 0.965;
+
+    p.x += p.vx; p.y += p.vy;
+    p.life -= (0.6 + rms*1.2);
+    if (p.life <= 0 || p.x<0||p.y<0||p.x>canvas.width||p.y>canvas.height){
+      particles.splice(i,1);
+    }
+  }
 }
 
-/* ===================== Patterns (Reactive) ===================== */
-let plateFade = 1.0; // damping accumulator
+function drawParticles(rms,eMain){
+  // soft afterglow
+  ctx.globalCompositeOperation='lighter';
+  for (let i=0;i<particles.length;i++){
+    const p = particles[i];
+    const size = 1.2 + 2.6*(rms + eMain*0.8);
+    const alpha = clamp(0.15 + rms*0.6 + eMain*0.4, 0.08, 0.9);
+    ctx.fillStyle = `hsla(${p.hue + eMain*120}, 90%, 65%, ${alpha})`;
+    ctx.beginPath(); ctx.arc(p.x,p.y,size,0,Math.PI*2); ctx.fill();
+  }
+
+  // audio-reactive linking
+  if (rms > 0.05){
+    const threshold = 26 + (1-rms)*30;
+    ctx.lineWidth = Math.max(0.6, 1.6*(rms + eMain*0.5));
+    for (let i=0;i<particles.length;i++){
+      for (let j=i+1;j<particles.length;j++){
+        const a=particles[i], b=particles[j];
+        const dx=a.x-b.x, dy=a.y-b.y, d=Math.hypot(dx,dy);
+        if (d < threshold){
+          const op = clamp(0.12*(threshold-d)/threshold * (0.7 + 1.2*rms), 0, 0.45);
+          ctx.strokeStyle = `hsla(${180 + eMain*180}, 80%, 70%, ${op})`;
+          ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke();
+        }
+      }
+    }
+  }
+  ctx.globalCompositeOperation='source-over';
+}
+
+/* ===================== Pattern Renderers ===================== */
+let plateFade = 1.0;
 
 function drawFlowerOfLife(){
   ctx.clearRect(0,0,canvas.width,canvas.height);
-  ctx.fillStyle='rgba(10,10,30,1)'; ctx.fillRect(0,0,canvas.width,canvas.height);
+  // vignette backdrop
+  const grad = ctx.createRadialGradient(centerX,centerY,60, centerX,centerY, Math.min(canvas.width,canvas.height)*0.7);
+  grad.addColorStop(0,'rgba(10,15,26,1)');
+  grad.addColorStop(1,'rgba(3,6,12,1)');
+  ctx.fillStyle=grad; ctx.fillRect(0,0,canvas.width,canvas.height);
 
-  const rms = getRMS(); // 0..~1
+  const rms = getRMS();
   const energyMain = bandEnergy(frequency);
-  const shimmer = (energyMain*medium.reactivity + rms*0.5) * 12;
-
   const baseR = Math.min(canvas.width,canvas.height)*0.08;
   const circles = getSacredGeometryPattern(centerX,centerY,baseR,frequency,complexity);
 
   plateFade = plateFade*medium.damping + (1-medium.damping)*(0.6 + rms*0.8);
 
   circles.forEach((c,idx)=>{
-    const margin=50;
-    if(c.x-c.radius>margin && c.x+c.radius<canvas.width-margin && c.y-c.radius>margin && c.y+c.radius<canvas.height-margin){
-      ctx.save();
-      const pulse = (0.6 + 0.4*Math.sin(time*animationSpeed + idx*0.3)) * plateFade;
-      const glow = (0.4 + 0.6*rms) * (1 + energyMain*0.6);
-      const rJitter = c.radius * (0.01 + 0.02 * energyMain) * Math.sin(time*animationSpeed*medium.ripple + idx);
+    ctx.save();
+    const pulse = (0.6 + 0.4*Math.sin(time*animationSpeed + idx*0.3)) * plateFade;
+    const glow = (0.4 + 0.6*rms) * (1 + energyMain*0.6);
+    const rJitter = c.radius * (0.01 + 0.02 * energyMain) * Math.sin(time*animationSpeed*medium.ripple + idx);
 
-      const colors=[
-        `rgba(0,255,200,${0.45 + 0.45*glow})`,
-        `rgba(100,255,255,${0.28 + 0.28*glow})`,
-        `rgba(200,255,255,${0.18 + 0.18*glow})`
-      ];
-      colors.forEach((col,layer)=>{
-        ctx.strokeStyle=col;
-        ctx.lineWidth= (2.8-layer) * (1 + 0.8*pulse);
-        ctx.shadowColor=col; ctx.shadowBlur=15 + layer*7 + glow*20;
-        ctx.beginPath(); ctx.arc(c.x, c.y, c.radius + rJitter, 0, Math.PI*2); ctx.stroke();
-      });
-      ctx.restore();
-    }
+    const colors=[
+      `rgba(0,255,200,${0.45 + 0.45*glow})`,
+      `rgba(100,255,255,${0.28 + 0.28*glow})`,
+      `rgba(200,255,255,${0.18 + 0.18*glow})`
+    ];
+    colors.forEach((col,layer)=>{
+      ctx.strokeStyle=col;
+      ctx.lineWidth= (2.8-layer) * (1 + 0.8*pulse);
+      ctx.shadowColor=col; ctx.shadowBlur=15 + layer*7 + glow*20;
+      ctx.beginPath(); ctx.arc(c.x, c.y, c.radius + rJitter, 0, Math.PI*2); ctx.stroke();
+    });
+    ctx.restore();
   });
 
+  // rim
   const plateR=Math.min(canvas.width,canvas.height)*0.47;
   ctx.strokeStyle=`rgba(100,200,255,${0.15 + 0.25*plateFade})`;
   ctx.lineWidth=2;
   ctx.beginPath(); ctx.arc(centerX,centerY,plateR,0,Math.PI*2); ctx.stroke();
 
-  // Info line
+  updateParticles(rms, energyMain);
+  drawParticles(rms, energyMain);
+
+  // info line
   ctx.fillStyle='rgba(255,255,255,.85)'; ctx.font='14px Arial'; ctx.textAlign='center';
   let info = (frequency<150) ? 'Single Circle - Foundation'
             : (frequency<300) ? 'Seed of Life - 7 Circles'
@@ -583,14 +672,14 @@ function drawCircularWaves(){
     ctx.lineWidth = width;
     ctx.beginPath(); ctx.arc(centerX,centerY,r*(1+0.004*eMain),0,Math.PI*2); ctx.stroke();
   }
+  updateParticles(rms,eMain); drawParticles(rms,eMain);
 }
 
 function drawFractalPattern(){
   const w=canvas.width, h=canvas.height;
   ctx.clearRect(0,0,w,h);
-
   const rms = getRMS();
-  const centroid = spectralCentroid(); // 0..1 mapped later
+  const centroid = spectralCentroid();
   const step = (w*h>300000)?2:1;
   const img = ctx.createImageData(w,h), data=img.data;
   const maxIt = Math.floor((complexity*2) * (0.8 + 1.2*rms));
@@ -606,7 +695,6 @@ function drawFractalPattern(){
       }
       const idx=(y*w + x)*4;
       const col = (it/maxIt)*255;
-      // hue mod by centroid (maps high-frequency energy to bluer hues)
       const hueShift = 60 + 240*centroid;
       data[idx]   = Math.min(255, col*0.5 + hueShift*0.2);
       data[idx+1] = Math.min(255, col*1.4);
@@ -615,21 +703,8 @@ function drawFractalPattern(){
     }
   }
   ctx.putImageData(img,0,0);
+  updateParticles(rms, bandEnergy(frequency)); drawParticles(rms, bandEnergy(frequency));
 }
-function spectralCentroid(){
-  const spec = analyser.getValue();
-  if(!spec || !spec.length) return 0;
-  const ny = Tone.getContext().sampleRate/2;
-  let num=0, den=0;
-  for(let i=0;i<spec.length;i++){
-    const f = (i/spec.length)*ny;
-    const lin = Math.pow(10, spec[i]/20); // convert dB to linear
-    num += f*lin; den += lin;
-  }
-  const c = den? num/den : 0;
-  return clamp(c/ny, 0, 1);
-}
-
 function hslToRgb(h,s,l){
   let r,g,b;
   if(s===0){r=g=b=l}else{
@@ -639,7 +714,6 @@ function hslToRgb(h,s,l){
   }
   return {r:Math.round(r*255), g:Math.round(g*255), b:Math.round(b*255)};
 }
-
 function drawInterferencePattern(){
   const w=canvas.width, h=canvas.height;
   ctx.clearRect(0,0,w,h);
@@ -669,9 +743,10 @@ function drawInterferencePattern(){
     }
   }
   ctx.putImageData(img,0,0);
+  updateParticles(rms,eMain); drawParticles(rms,eMain);
 }
 
-/* ===================== Animation Loop + Pattern Switching ===================== */
+/* ===================== Animation Loop ===================== */
 let currentPatternFn = drawFlowerOfLife;
 function setPattern(p){
   currentPattern = p;
@@ -702,7 +777,6 @@ window.addEventListener('beforeunload', ()=>{
 
 /* ===================== Init Labels ===================== */
 updateFreqDisplays();
-
 </script>
 </body>
 </html>
