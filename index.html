@@ -1,773 +1,481 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Interactive Cymatics Simulator</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Arial', sans-serif;
-            background: linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 50%, #16213e 100%);
-            color: white;
-            overflow-x: hidden;
-            min-height: 100vh;
-        }
-
-        .container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 20px;
-            min-height: 100vh;
-        }
-
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-            animation: glow 2s ease-in-out infinite alternate;
-        }
-
-        @keyframes glow {
-            from { text-shadow: 0 0 10px #00ff88, 0 0 20px #00ff88; }
-            to { text-shadow: 0 0 20px #00ff88, 0 0 30px #00ff88; }
-        }
-
-        .header h1 {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
-            background: linear-gradient(45deg, #00ff88, #00ccff);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .header p {
-            font-size: 1.1rem;
-            opacity: 0.8;
-            max-width: 600px;
-        }
-
-        .visualization-container {
-            position: relative;
-            margin-bottom: 30px;
-            border-radius: 20px;
-            overflow: hidden;
-            box-shadow: 0 20px 40px rgba(0, 255, 136, 0.2);
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
-        }
-
-        #canvas {
-            display: block;
-            background: radial-gradient(circle at center, #1a1a1a 0%, #000000 100%);
-            border-radius: 20px;
-        }
-
-        .controls {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-            max-width: 1000px;
-            width: 100%;
-        }
-
-        .control-group {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 25px;
-            border-radius: 15px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            transition: all 0.3s ease;
-        }
-
-        .control-group:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0, 255, 136, 0.2);
-        }
-
-        .control-group h3 {
-            margin-bottom: 15px;
-            color: #00ff88;
-            font-size: 1.2rem;
-        }
-
-        .slider-container {
-            margin-bottom: 20px;
-        }
-
-        .slider-container label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 500;
-        }
-
-        .slider {
-            width: 100%;
-            -webkit-appearance: none;
-            height: 8px;
-            background: linear-gradient(90deg, #333, #666);
-            border-radius: 5px;
-            outline: none;
-            margin-bottom: 5px;
-        }
-
-        .slider::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 20px;
-            height: 20px;
-            background: linear-gradient(45deg, #00ff88, #00ccff);
-            border-radius: 50%;
-            cursor: pointer;
-            box-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
-        }
-
-        .slider::-moz-range-thumb {
-            width: 20px;
-            height: 20px;
-            background: linear-gradient(45deg, #00ff88, #00ccff);
-            border-radius: 50%;
-            cursor: pointer;
-            box-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
-            border: none;
-        }
-
-        .value-display {
-            text-align: center;
-            font-size: 0.9rem;
-            opacity: 0.8;
-        }
-
-        button {
-            background: linear-gradient(45deg, #00ff88, #00ccff);
-            color: black;
-            border: none;
-            padding: 12px 25px;
-            border-radius: 25px;
-            cursor: pointer;
-            font-size: 1rem;
-            font-weight: bold;
-            transition: all 0.3s ease;
-            margin: 5px;
-        }
-
-        button:hover {
-            transform: scale(1.05);
-            box-shadow: 0 5px 15px rgba(0, 255, 136, 0.4);
-        }
-
-        button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .pattern-buttons {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 10px;
-        }
-
-        .info-panel {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 20px;
-            border-radius: 15px;
-            margin-top: 20px;
-            max-width: 800px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .frequency-display {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: #00ff88;
-            text-align: center;
-            margin: 10px 0;
-            text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
-        }
-
-        .active-pattern {
-            background: linear-gradient(45deg, #00ff88, #00ccff) !important;
-            transform: scale(1.05);
-        }
-
-        @media (max-width: 768px) {
-            .controls {
-                grid-template-columns: 1fr;
-            }
-            
-            .header h1 {
-                font-size: 2rem;
-            }
-            
-            #canvas {
-                width: 350px !important;
-                height: 350px !important;
-            }
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Interactive Cymatics Simulator</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      background:linear-gradient(135deg,#0c0c0c 0%,#1a1a2e 50%,#16213e 100%);
+      color:#fff;overflow-x:hidden;min-height:100vh
+    }
+    .container{display:flex;flex-direction:column;align-items:center;padding:20px;min-height:100vh}
+    .header{text-align:center;margin-bottom:30px;animation:glow 2s ease-in-out infinite alternate}
+    @keyframes glow{from{text-shadow:0 0 10px #00ff88,0 0 20px #00ff88}to{text-shadow:0 0 20px #00ff88,0 0 30px #00ff88}}
+    .header h1{font-size:2.5rem;margin-bottom:10px;background:linear-gradient(45deg,#00ff88,#00ccff);
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .header p{font-size:1.05rem;opacity:.85;max-width:800px}
+    .visualization-container{position:relative;margin-bottom:30px;border-radius:20px;overflow:hidden;
+      box-shadow:0 20px 40px rgba(0,255,136,.2);background:rgba(255,255,255,.05);backdrop-filter:blur(10px)}
+    #canvas{display:block;background:radial-gradient(circle at center,#1a1a1a 0%,#000 100%);border-radius:20px}
+    .controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;max-width:1000px;width:100%}
+    .control-group{background:rgba(255,255,255,.1);padding:25px;border-radius:15px;backdrop-filter:blur(10px);
+      border:1px solid rgba(255,255,255,.1);transition:all .3s ease}
+    .control-group:hover{transform:translateY(-5px);box-shadow:0 10px 25px rgba(0,255,136,.2)}
+    .control-group h3{margin-bottom:15px;color:#00ff88;font-size:1.1rem}
+    .slider-container{margin-bottom:18px}
+    .slider-container label{display:block;margin-bottom:8px;font-weight:600}
+    .slider{width:100%;-webkit-appearance:none;height:8px;background:linear-gradient(90deg,#333,#666);
+      border-radius:5px;outline:none;margin-bottom:6px}
+    .slider::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;background:linear-gradient(45deg,#00ff88,#00ccff);
+      border-radius:50%;cursor:pointer;box-shadow:0 0 10px rgba(0,255,136,.5)}
+    .slider::-moz-range-thumb{width:20px;height:20px;background:linear-gradient(45deg,#00ff88,#00ccff);
+      border-radius:50%;cursor:pointer;box-shadow:0 0 10px rgba(0,255,136,.5);border:none}
+    .value-display{text-align:center;font-size:.9rem;opacity:.85}
+    button{background:linear-gradient(45deg,#00ff88,#00ccff);color:#000;border:none;padding:12px 20px;border-radius:25px;
+      cursor:pointer;font-size:1rem;font-weight:700;transition:all .25s ease;margin:5px}
+    button:hover{transform:scale(1.05);box-shadow:0 5px 15px rgba(0,255,136,.4)}
+    button:disabled{opacity:.5;cursor:not-allowed;transform:none}
+    .pattern-buttons{display:flex;flex-wrap:wrap;gap:10px}
+    .info-panel{background:rgba(255,255,255,.1);padding:20px;border-radius:15px;margin-top:20px;max-width:800px;
+      backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.1)}
+    .frequency-display{font-size:1.4rem;font-weight:800;color:#00ff88;text-align:center;margin:10px 0;
+      text-shadow:0 0 10px rgba(0,255,136,.5)}
+    .active-pattern{outline:2px solid #00ff88;transform:scale(1.05)}
+    .unlock{margin-top:10px;font-size:.95rem;opacity:.8}
+    @media (max-width:768px){
+      .header h1{font-size:2rem}
+      #canvas{width:350px !important;height:350px !important}
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>Interactive Cymatics Simulator</h1>
-            <p>Explore the beautiful intersection of sound and physics. Watch how different tones add complexity as frequencies increase - revealing the geometric foundations of creation itself.</p>
-        </div>
-
-        <div class="visualization-container">
-            <canvas id="canvas" width="500" height="500"></canvas>
-        </div>
-
-        <div class="frequency-display" id="frequencyDisplay">440 Hz</div>
-
-        <div class="controls">
-            <div class="control-group">
-                <h3>🎵 Sound Controls</h3>
-                <div class="slider-container">
-                    <label for="frequency">Frequency</label>
-                    <input type="range" id="frequency" class="slider" min="20" max="2000" value="440" step="1">
-                    <div class="value-display" id="freqValue">440 Hz</div>
-                </div>
-                <div class="slider-container">
-                    <label for="volume">Volume</label>
-                    <input type="range" id="volume" class="slider" min="0" max="100" value="50" step="1">
-                    <div class="value-display" id="volValue">50%</div>
-                </div>
-                <button id="playBtn">▶ Play Tone</button>
-                <button id="stopBtn" disabled>⏸ Stop</button>
-            </div>
-
-            <div class="control-group">
-                <h3>🎨 Visual Parameters</h3>
-                <div class="slider-container">
-                    <label for="complexity">Pattern Complexity</label>
-                    <input type="range" id="complexity" class="slider" min="1" max="10" value="5" step="1">
-                    <div class="value-display" id="compValue">5</div>
-                </div>
-                <div class="slider-container">
-                    <label for="amplitude">Circle Brightness</label>
-                    <input type="range" id="amplitude" class="slider" min="10" max="200" value="80" step="5">
-                    <div class="value-display" id="ampValue">80</div>
-                </div>
-                <div class="slider-container">
-                    <label for="speed">Animation Speed</label>
-                    <input type="range" id="speed" class="slider" min="0.1" max="3" value="1" step="0.1">
-                    <div class="value-display" id="speedValue">1.0x</div>
-                </div>
-            </div>
-
-            <div class="control-group">
-                <h3>🔬 Preset Frequencies</h3>
-                <div class="pattern-buttons">
-                    <button onclick="setFrequency(110)">110 Hz</button>
-                    <button onclick="setFrequency(220)">220 Hz</button>
-                    <button onclick="setFrequency(440)">440 Hz (A4)</button>
-                    <button onclick="setFrequency(528)">528 Hz</button>
-                    <button onclick="setFrequency(741)">741 Hz</button>
-                    <button onclick="setFrequency(852)">852 Hz</button>
-                </div>
-            </div>
-
-            <div class="control-group">
-                <h3>🌀 Pattern Types</h3>
-                <div class="pattern-buttons">
-                    <button id="flowerOfLifeBtn" class="active-pattern" onclick="setPattern('flowerOfLife')">Flower of Life</button>
-                    <button id="circularBtn" onclick="setPattern('circular')">Circular Waves</button>
-                    <button id="fractalBtn" onclick="setPattern('fractal')">Fractal Pattern</button>
-                    <button id="interferenceBtn" onclick="setPattern('interference')">Wave Interference</button>
-                </div>
-            </div>
-        </div>
-
-        <div class="info-panel">
-            <h3>About Cymatics & Flower of Life</h3>
-            <p>Cymatics is the study of visible sound and vibration, where sound waves are transformed into visual patterns on the surface of a medium like sand or water. Derived from the Ancient Greek word for "wave" (kŷma), cymatics involves observing the intricate geometric shapes and patterns that emerge on vibrating surfaces at different frequencies. The term was coined by Swiss physician Hans Jenny in the 1960s, who developed the field further based on earlier experiments by Ernst Chladni</p>
-        </div>
+  <div class="container">
+    <div class="header">
+      <h1>Interactive Cymatics Simulator</h1>
+      <p>Explore the beautiful intersection of sound and physics. Watch how different tones add complexity as frequencies change — revealing emergent geometry.</p>
+      <div id="unlockHint" class="unlock" style="display:none;">🔊 Tap “Play Tone” once to enable audio.</div>
     </div>
 
-    <script>
-        // Audio setup
-        let oscillator = null;
-        let isPlaying = false;
+    <div class="visualization-container">
+      <canvas id="canvas" width="500" height="500"></canvas>
+    </div>
 
-        // Canvas setup
-        const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
-        const centerX = canvas.width / 2;
-        const centerY = canvas.height / 2;
+    <div class="frequency-display" id="frequencyDisplay">440 Hz (A4)</div>
 
-        // Animation variables
-        let animationId;
-        let time = 0;
-        let currentPattern = 'flowerOfLife';
+    <div class="controls">
+      <div class="control-group">
+        <h3>🎵 Sound Controls</h3>
+        <div class="slider-container">
+          <label for="frequency">Frequency</label>
+          <input type="range" id="frequency" class="slider" min="20" max="2000" value="440" step="1">
+          <div class="value-display" id="freqValue">440 Hz (A4)</div>
+        </div>
+        <div class="slider-container">
+          <label for="volume">Volume</label>
+          <input type="range" id="volume" class="slider" min="0" max="100" value="50" step="1">
+          <div class="value-display" id="volValue">50%</div>
+        </div>
+        <div class="slider-container">
+          <label for="wave">Waveform</label>
+          <select id="wave" style="width:100%;padding:8px;border-radius:10px;border:none">
+            <option value="sine" selected>Sine (clean)</option>
+            <option value="triangle">Triangle</option>
+            <option value="square">Square (rich)</option>
+            <option value="sawtooth">Sawtooth (bright)</option>
+          </select>
+        </div>
+        <button id="playBtn">▶ Play Tone</button>
+        <button id="stopBtn" disabled>⏸ Stop</button>
+        <button id="muteBtn">🔇 Mute</button>
+      </div>
 
-        // Parameters
-        let frequency = 440;
-        let complexity = 5;
-        let amplitude = 80;
-        let animationSpeed = 1;
+      <div class="control-group">
+        <h3>🎨 Visual Parameters</h3>
+        <div class="slider-container">
+          <label for="complexity">Pattern Complexity</label>
+          <input type="range" id="complexity" class="slider" min="1" max="10" value="5" step="1">
+          <div class="value-display" id="compValue">5</div>
+        </div>
+        <div class="slider-container">
+          <label for="amplitude">Circle Brightness</label>
+          <input type="range" id="amplitude" class="slider" min="10" max="200" value="80" step="5">
+          <div class="value-display" id="ampValue">80</div>
+        </div>
+        <div class="slider-container">
+          <label for="speed">Animation Speed</label>
+          <input type="range" id="speed" class="slider" min="0.1" max="3" value="1" step="0.1">
+          <div class="value-display" id="speedValue">1.0x</div>
+        </div>
+      </div>
 
-        // Flower of Life geometry
-        function getFlowerOfLifeCircles(centerX, centerY, baseRadius, rings) {
-            const circles = [];
-            
-            // Central circle
-            circles.push({ x: centerX, y: centerY, radius: baseRadius });
-            
-            if (rings >= 1) {
-                // First ring - 6 circles
-                const distance = baseRadius * 1.0; // Distance to center of surrounding circles
-                for (let i = 0; i < 6; i++) {
-                    const angle = (i * Math.PI * 2) / 6;
-                    circles.push({
-                        x: centerX + Math.cos(angle) * distance,
-                        y: centerY + Math.sin(angle) * distance,
-                        radius: baseRadius
-                    });
-                }
-            }
-            
-            if (rings >= 2) {
-                // Second ring - 12 circles
-                const distance = baseRadius * 2.0;
-                for (let i = 0; i < 12; i++) {
-                    const angle = (i * Math.PI * 2) / 12;
-                    circles.push({
-                        x: centerX + Math.cos(angle) * distance,
-                        y: centerY + Math.sin(angle) * distance,
-                        radius: baseRadius
-                    });
-                }
-            }
-            
-            if (rings >= 3) {
-                // Third ring - 18 circles
-                const distance = baseRadius * 3.0;
-                for (let i = 0; i < 18; i++) {
-                    const angle = (i * Math.PI * 2) / 18;
-                    circles.push({
-                        x: centerX + Math.cos(angle) * distance,
-                        y: centerY + Math.sin(angle) * distance,
-                        radius: baseRadius
-                    });
-                }
-            }
-            
-            if (rings >= 4) {
-                // Fourth ring - 24 circles
-                const distance = baseRadius * 4.0;
-                for (let i = 0; i < 24; i++) {
-                    const angle = (i * Math.PI * 2) / 24;
-                    circles.push({
-                        x: centerX + Math.cos(angle) * distance,
-                        y: centerY + Math.sin(angle) * distance,
-                        radius: baseRadius
-                    });
-                }
-            }
-            
-            if (rings >= 5) {
-                // Fifth ring - 30 circles
-                const distance = baseRadius * 5.0;
-                for (let i = 0; i < 30; i++) {
-                    const angle = (i * Math.PI * 2) / 30;
-                    circles.push({
-                        x: centerX + Math.cos(angle) * distance,
-                        y: centerY + Math.sin(angle) * distance,
-                        radius: baseRadius
-                    });
-                }
-            }
-            
-            return circles;
+      <div class="control-group">
+        <h3>🔬 Preset Frequencies</h3>
+        <div class="pattern-buttons" id="presetButtons">
+          <button data-freq="110">110 Hz (A2)</button>
+          <button data-freq="220">220 Hz (A3)</button>
+          <button data-freq="440" class="active-pattern">440 Hz (A4)</button>
+          <button data-freq="528">528 Hz</button>
+          <button data-freq="741">741 Hz</button>
+          <button data-freq="852">852 Hz</button>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <h3>🌀 Pattern Types</h3>
+        <div class="pattern-buttons">
+          <button id="flowerOfLifeBtn" class="active-pattern" onclick="setPattern('flowerOfLife')">Flower of Life</button>
+          <button id="circularBtn" onclick="setPattern('circular')">Circular Waves</button>
+          <button id="fractalBtn" onclick="setPattern('fractal')">Fractal Pattern</button>
+          <button id="interferenceBtn" onclick="setPattern('interference')">Wave Interference</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="info-panel">
+      <h3>About Cymatics & Flower of Life</h3>
+      <p>Cymatics is the study of visible sound and vibration, where patterns emerge on vibrating surfaces at different frequencies. The term was popularized by Hans Jenny building on earlier work by Chladni with sand plates. While the visual motifs can resemble “sacred geometry,” what you’re seeing here are standing-wave patterns and interference from periodic excitation.</p>
+    </div>
+  </div>
+
+  <script>
+    // -------- Audio graph (robust & click-free) --------
+    let osc = null;
+    let ampEnv = null;
+    const gain = new Tone.Gain(0.5);
+    const limiter = new Tone.Limiter(-3).toDestination(); // safety
+    gain.connect(limiter);
+
+    let isPlaying = false;
+    let isMuted = false;
+
+    async function ensureAudio() {
+      if (Tone.context.state !== 'running') {
+        try {
+          await Tone.start();
+          document.getElementById('unlockHint').style.display = 'none';
+        } catch {
+          document.getElementById('unlockHint').style.display = 'block';
         }
+      }
+    }
 
-        function getSacredGeometryPattern(centerX, centerY, baseRadius, frequency, complexity) {
-            const circles = [];
-            
-            if (frequency < 150) {
-                // Simple single circle
-                circles.push({ x: centerX, y: centerY, radius: baseRadius * 2 });
-                
-            } else if (frequency < 300) {
-                // Basic flower of life - center + first ring
-                const rings = Math.min(1, Math.floor(complexity / 2));
-                return getFlowerOfLifeCircles(centerX, centerY, baseRadius, rings);
-                
-            } else if (frequency < 450) {
-                // Extended flower of life - up to second ring
-                const rings = Math.min(2, Math.floor(complexity / 2) + 1);
-                return getFlowerOfLifeCircles(centerX, centerY, baseRadius, rings);
-                
-            } else if (frequency < 600) {
-                // Complex flower of life - up to third ring
-                const rings = Math.min(3, Math.floor(complexity / 2) + 1);
-                return getFlowerOfLifeCircles(centerX, centerY, baseRadius, rings);
-                
-            } else if (frequency < 900) {
-                // Very complex - fourth ring
-                const rings = Math.min(4, complexity);
-                return getFlowerOfLifeCircles(centerX, centerY, baseRadius * 0.8, rings);
-                
-            } else {
-                // Maximum complexity - fifth ring
-                const rings = Math.min(5, complexity + 1);
-                return getFlowerOfLifeCircles(centerX, centerY, baseRadius * 0.7, rings);
-            }
-            
-            return circles;
+    // -------- UI refs --------
+    const freqSlider = document.getElementById('frequency');
+    const volSlider  = document.getElementById('volume');
+    const waveSel    = document.getElementById('wave');
+    const freqDisplay= document.getElementById('frequencyDisplay');
+    const freqValue  = document.getElementById('freqValue');
+    const volValue   = document.getElementById('volValue');
+    const playBtn    = document.getElementById('playBtn');
+    const stopBtn    = document.getElementById('stopBtn');
+    const muteBtn    = document.getElementById('muteBtn');
+
+    const compSlider = document.getElementById('complexity');
+    const ampSlider  = document.getElementById('amplitude');
+    const speedSlider= document.getElementById('speed');
+    const compValue  = document.getElementById('compValue');
+    const ampValue   = document.getElementById('ampValue');
+    const speedValue = document.getElementById('speedValue');
+
+    // -------- State for visuals --------
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const centerX = canvas.width/2, centerY = canvas.height/2;
+
+    let animationId, time = 0, currentPattern = 'flowerOfLife';
+    let frequency = parseFloat(freqSlider.value);
+    let complexity = parseInt(compSlider.value,10);
+    let amplitude = parseInt(ampSlider.value,10);
+    let animationSpeed = parseFloat(speedSlider.value);
+
+    // -------- Helpers --------
+    function linVolFromPercent(pct){ return Math.max(0, Math.min(1, pct/100)); }
+    function nearestNoteName(freq){
+      const A4 = 440;
+      const n = 12 * Math.log2(freq / A4);
+      const rounded = Math.round(n);
+      const noteIdx = (rounded + 9 + 1200) % 12; // C=0 mapping trick
+      const notes = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+      const note = notes[noteIdx];
+      const octave = 4 + Math.floor((rounded + 9) / 12);
+      return `${note}${octave}`;
+    }
+    function updateFreqDisplays(){
+      const note = nearestNoteName(frequency);
+      freqValue.textContent = `${frequency} Hz (${note})`;
+      freqDisplay.textContent = `${frequency} Hz (${note})`;
+    }
+
+    // -------- Event wiring --------
+    document.body.addEventListener('pointerdown', ensureAudio, { once:true });
+
+    freqSlider.addEventListener('input', e=>{
+      frequency = parseFloat(e.target.value);
+      updateFreqDisplays();
+      if (osc) osc.frequency.setValueAtTime(frequency, Tone.now());
+    });
+
+    volSlider.addEventListener('input', e=>{
+      const pct = parseInt(e.target.value,10);
+      volValue.textContent = `${pct}%`;
+      gain.gain.linearRampToValueAtTime(linVolFromPercent(pct), Tone.now() + 0.03);
+    });
+
+    waveSel.addEventListener('change', e=>{
+      if (osc) osc.type = e.target.value;
+    });
+
+    compSlider.addEventListener('input', e=>{
+      complexity = parseInt(e.target.value,10);
+      compValue.textContent = complexity;
+    });
+
+    ampSlider.addEventListener('input', e=>{
+      amplitude = parseInt(e.target.value,10);
+      ampValue.textContent = amplitude;
+    });
+
+    speedSlider.addEventListener('input', e=>{
+      animationSpeed = parseFloat(e.target.value);
+      speedValue.textContent = animationSpeed.toFixed(1) + 'x';
+    });
+
+    // Preset frequency buttons
+    document.getElementById('presetButtons').addEventListener('click', e=>{
+      if(e.target.matches('button[data-freq]')){
+        const f = parseFloat(e.target.getAttribute('data-freq'));
+        setFrequency(f);
+        // visual active state
+        document.querySelectorAll('#presetButtons button').forEach(b=>b.classList.remove('active-pattern'));
+        e.target.classList.add('active-pattern');
+      }
+    });
+
+    // Play / Stop / Mute
+    playBtn.addEventListener('click', async ()=>{
+      await ensureAudio();
+      startTone();
+    });
+    stopBtn.addEventListener('click', stopTone);
+    muteBtn.addEventListener('click', ()=>{
+      isMuted = !isMuted;
+      gain.mute = isMuted;
+      muteBtn.textContent = isMuted ? '🔈 Unmute' : '🔇 Mute';
+    });
+
+    // -------- Tone control --------
+    function startTone(){
+      if (isPlaying) return;
+
+      // Create oscillator & envelope on each start (simple lifecycle)
+      osc = new Tone.Oscillator(frequency, waveSel.value);
+      ampEnv = new Tone.AmplitudeEnvelope({
+        attack: 0.01, decay: 0.05, sustain: 0.95, release: 0.2
+      });
+
+      osc.connect(ampEnv).connect(gain);
+
+      // set current gain from slider
+      gain.gain.value = linVolFromPercent(parseInt(volSlider.value,10));
+
+      osc.start();
+      ampEnv.triggerAttack(Tone.now());
+
+      isPlaying = true;
+      playBtn.disabled = true;
+      stopBtn.disabled = false;
+    }
+
+    function stopTone(){
+      if (!isPlaying) return;
+      const now = Tone.now();
+      ampEnv.triggerRelease(now);
+      // stop the osc slightly after release to avoid clicks
+      osc.stop(now + 0.25);
+
+      // cleanup after release completes
+      setTimeout(()=>{
+        if (osc){ osc.dispose(); osc = null; }
+        if (ampEnv){ ampEnv.dispose(); ampEnv = null; }
+      }, 300);
+
+      isPlaying = false;
+      playBtn.disabled = false;
+      stopBtn.disabled = true;
+    }
+
+    function setFrequency(freq){
+      frequency = Math.max(20, Math.min(20000, freq));
+      freqSlider.value = frequency;
+      updateFreqDisplays();
+      if (osc){ osc.frequency.setValueAtTime(frequency, Tone.now()); }
+    }
+
+    function setPattern(pattern){
+      currentPattern = pattern;
+      document.querySelectorAll('.pattern-buttons button[id$="Btn"]').forEach(btn=>btn.classList.remove('active-pattern'));
+      const el = document.getElementById(pattern+'Btn');
+      if (el) el.classList.add('active-pattern');
+    }
+
+    // -------- Geometry helpers (same as your original, lightly tidied) --------
+    function getFlowerOfLifeCircles(centerX, centerY, baseRadius, rings){
+      const circles=[{x:centerX,y:centerY,radius:baseRadius}];
+      const addRing=(count,dist)=>{for(let i=0;i<count;i++){const a=i*2*Math.PI/count;circles.push({x:centerX+Math.cos(a)*dist,y:centerY+Math.sin(a)*dist,radius:baseRadius});}};
+      if(rings>=1) addRing(6,baseRadius*1.0);
+      if(rings>=2) addRing(12,baseRadius*2.0);
+      if(rings>=3) addRing(18,baseRadius*3.0);
+      if(rings>=4) addRing(24,baseRadius*4.0);
+      if(rings>=5) addRing(30,baseRadius*5.0);
+      return circles;
+    }
+
+    function getSacredGeometryPattern(cx, cy, baseR, f, comp){
+      if (f<150) return [{x:cx,y:cy,radius:baseR*2}];
+      if (f<300) return getFlowerOfLifeCircles(cx,cy,baseR, Math.min(1, Math.floor(comp/2)));
+      if (f<450) return getFlowerOfLifeCircles(cx,cy,baseR, Math.min(2, Math.floor(comp/2)+1));
+      if (f<600) return getFlowerOfLifeCircles(cx,cy,baseR, Math.min(3, Math.floor(comp/2)+1));
+      if (f<900) return getFlowerOfLifeCircles(cx,cy,baseR*0.8, Math.min(4, comp));
+      return getFlowerOfLifeCircles(cx,cy,baseR*0.7, Math.min(5, comp+1));
+    }
+
+    // -------- Rendering --------
+    function drawFlowerOfLife(){
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      ctx.fillStyle='rgba(10,10,30,1)'; ctx.fillRect(0,0,canvas.width,canvas.height);
+
+      const baseR = Math.min(canvas.width,canvas.height)*0.08;
+      const circles = getSacredGeometryPattern(centerX,centerY,baseR,frequency,complexity);
+
+      circles.forEach((c,idx)=>{
+        const m=50;
+        if(c.x-c.radius>m && c.x+c.radius<canvas.width-m && c.y-c.radius>m && c.y+c.radius<canvas.height-m){
+          ctx.save();
+          const glow = 0.7 + 0.3*Math.sin(time*animationSpeed + idx*0.2);
+          const colors=[
+            `rgba(0,255,200,${glow*0.8})`,
+            `rgba(100,255,255,${glow*0.6})`,
+            `rgba(200,255,255,${glow*0.4})`
+          ];
+          colors.forEach((col,layer)=>{
+            ctx.strokeStyle=col; ctx.lineWidth=3-layer; ctx.shadowColor=col; ctx.shadowBlur=15+layer*5;
+            ctx.beginPath(); ctx.arc(c.x,c.y,c.radius,0,Math.PI*2); ctx.stroke();
+          });
+          ctx.restore();
         }
+      });
 
-        // Initialize Tone.js
-        async function initAudio() {
-            if (Tone.context.state !== 'running') {
-                await Tone.start();
-            }
+      const plateR=Math.min(canvas.width,canvas.height)*0.47;
+      ctx.strokeStyle='rgba(100,200,255,.3)'; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.arc(centerX,centerY,plateR,0,Math.PI*2); ctx.stroke();
+
+      ctx.fillStyle='rgba(255,255,255,.85)'; ctx.font='14px Arial'; ctx.textAlign='center';
+      let info = (frequency<150) ? 'Single Circle - Foundation'
+              : (frequency<300) ? 'Seed of Life - 7 Circles'
+              : (frequency<450) ? 'Flower of Life - 19 Circles'
+              : (frequency<600) ? 'Extended Pattern - 37 Circles'
+              : (frequency<900) ? 'Complex Mandala - 61 Circles'
+              : 'Sacred Geometry - 91+ Circles';
+      ctx.fillText(info, centerX, canvas.height-20);
+    }
+
+    function drawCircularWaves(){
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      for(let r=10;r<300;r+=5){
+        const alpha = Math.abs(Math.sin((frequency/100)*(r/10) + time*animationSpeed))*(amplitude/100);
+        const width = 1.5 + Math.sin(r/10 + time)*complexity/2;
+        ctx.strokeStyle = `hsla(${180 + frequency/10},70%,60%,${alpha})`;
+        ctx.lineWidth = width;
+        ctx.beginPath(); ctx.arc(centerX,centerY,r,0,Math.PI*2); ctx.stroke();
+      }
+    }
+
+    function drawFractalPattern(){
+      // Guard: keep heavy mode a bit lighter on small devices
+      const w = canvas.width, h = canvas.height;
+      const step = (w*h > 300000) ? 2 : 1; // subsample on big canvases
+      ctx.clearRect(0,0,w,h);
+      const img = ctx.createImageData(w,h);
+      const data = img.data;
+      const maxIt = complexity * 2;
+      for (let x=0; x<w; x+=step){
+        for (let y=0; y<h; y+=step){
+          const nx=(x-centerX)/(amplitude*2), ny=(y-centerY)/(amplitude*2);
+          let zx=nx, zy=ny, it=0, c=frequency/1000;
+          while (zx*zx+zy*zy<4 && it<maxIt){
+            const t = zx*zx - zy*zy + c*Math.cos(time*animationSpeed);
+            zy = 2*zx*zy + c*Math.sin(time*animationSpeed);
+            zx = t; it++;
+          }
+          const idx = (y*w + x)*4; const col = (it/maxIt)*255;
+          data[idx]=col*0.5; data[idx+1]=Math.min(255,col*1.5); data[idx+2]=col*0.8; data[idx+3]=255;
         }
+      }
+      ctx.putImageData(img,0,0);
+    }
 
-        // Control elements
-        const freqSlider = document.getElementById('frequency');
-        const volSlider = document.getElementById('volume');
-        const compSlider = document.getElementById('complexity');
-        const ampSlider = document.getElementById('amplitude');
-        const speedSlider = document.getElementById('speed');
+    function hslToRgb(h,s,l){
+      let r,g,b;
+      if(s===0){r=g=b=l}else{
+        const hue2rgb=(p,q,t)=>{ if(t<0)t+=1; if(t>1)t-=1; if(t<1/6)return p+(q-p)*6*t; if(t<1/2)return q; if(t<2/3)return p+(q-p)*(2/3-t)*6; return p; };
+        const q = l<0.5 ? l*(1+s) : l + s - l*s;
+        const p = 2*l - q;
+        r=hue2rgb(p,q,h+1/3); g=hue2rgb(p,q,h); b=hue2rgb(p,q,h-1/3);
+      }
+      return { r:Math.round(r*255), g:Math.round(g*255), b:Math.round(b*255) };
+    }
 
-        const freqDisplay = document.getElementById('frequencyDisplay');
-        const freqValue = document.getElementById('freqValue');
-        const volValue = document.getElementById('volValue');
-        const compValue = document.getElementById('compValue');
-        const ampValue = document.getElementById('ampValue');
-        const speedValue = document.getElementById('speedValue');
-
-        const playBtn = document.getElementById('playBtn');
-        const stopBtn = document.getElementById('stopBtn');
-
-        // Event listeners
-        freqSlider.addEventListener('input', (e) => {
-            frequency = parseInt(e.target.value);
-            freqValue.textContent = frequency + ' Hz';
-            freqDisplay.textContent = frequency + ' Hz';
-            if (oscillator) {
-                oscillator.frequency.setValueAtTime(frequency, Tone.now());
-            }
-        });
-
-        volSlider.addEventListener('input', (e) => {
-            const volume = parseInt(e.target.value);
-            volValue.textContent = volume + '%';
-            if (oscillator) {
-                const dbValue = (volume / 100) * 0.5 - 0.5;
-                oscillator.volume.setValueAtTime(dbValue, Tone.now());
-            }
-        });
-
-        compSlider.addEventListener('input', (e) => {
-            complexity = parseInt(e.target.value);
-            compValue.textContent = complexity;
-        });
-
-        ampSlider.addEventListener('input', (e) => {
-            amplitude = parseInt(e.target.value);
-            ampValue.textContent = amplitude;
-        });
-
-        speedSlider.addEventListener('input', (e) => {
-            animationSpeed = parseFloat(e.target.value);
-            speedValue.textContent = animationSpeed + 'x';
-        });
-
-        playBtn.addEventListener('click', async () => {
-            await initAudio();
-            playTone();
-        });
-
-        stopBtn.addEventListener('click', stopTone);
-
-        function playTone() {
-            if (!isPlaying) {
-                oscillator = new Tone.Oscillator(frequency, "sine").toDestination();
-                const volume = parseInt(volSlider.value);
-                const dbValue = (volume / 100) * 0.5 - 0.5;
-                oscillator.volume.setValueAtTime(dbValue, Tone.now());
-                oscillator.start();
-                
-                isPlaying = true;
-                playBtn.disabled = true;
-                stopBtn.disabled = false;
-            }
+    function drawInterferencePattern(){
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      const w=canvas.width,h=canvas.height;
+      const img=ctx.createImageData(w,h), data=img.data;
+      const sources=[
+        {x:centerX-50,y:centerY},
+        {x:centerX+50,y:centerY},
+        {x:centerX,y:centerY-50*Math.sin(Math.PI/3)}
+      ];
+      for(let x=0;x<w;x++){
+        for(let y=0;y<h;y++){
+          let total=0;
+          for(const s of sources){
+            const d = Math.hypot(x-s.x,y-s.y);
+            total += Math.sin((frequency/50)*d + time*animationSpeed) / sources.length;
+          }
+          const intensity = Math.abs(total)*amplitude;
+          const idx=(y*w+x)*4;
+          if(intensity>0.2){
+            const hue = (frequency/10 + time*50)%360;
+            const rgb = hslToRgb(hue/360,0.8,Math.min(1,intensity/100));
+            data[idx]=rgb.r; data[idx+1]=rgb.g; data[idx+2]=rgb.b; data[idx+3]=Math.min(255,intensity*3);
+          } else { data[idx+3]=255; }
         }
+      }
+      ctx.putImageData(img,0,0);
+    }
 
-        function stopTone() {
-            if (oscillator && isPlaying) {
-                oscillator.stop();
-                oscillator.dispose();
-                oscillator = null;
-                isPlaying = false;
-                playBtn.disabled = false;
-                stopBtn.disabled = true;
-            }
-        }
+    function animate(){
+      time += 0.05;
+      switch(currentPattern){
+        case 'flowerOfLife': drawFlowerOfLife(); break;
+        case 'circular':     drawCircularWaves(); break;
+        case 'fractal':      drawFractalPattern(); break;
+        case 'interference': drawInterferencePattern(); break;
+      }
+      animationId = requestAnimationFrame(animate);
+    }
+    animate();
 
-        function setFrequency(freq) {
-            frequency = freq;
-            freqSlider.value = freq;
-            freqValue.textContent = freq + ' Hz';
-            freqDisplay.textContent = freq + ' Hz';
-            if (oscillator) {
-                oscillator.frequency.setValueAtTime(freq, Tone.now());
-            }
-        }
+    window.addEventListener('beforeunload', ()=>{
+      stopTone();
+      if(animationId) cancelAnimationFrame(animationId);
+    });
 
-        function setPattern(pattern) {
-            currentPattern = pattern;
-            
-            // Update button states
-            document.querySelectorAll('.pattern-buttons button').forEach(btn => {
-                btn.classList.remove('active-pattern');
-            });
-            document.getElementById(pattern + 'Btn').classList.add('active-pattern');
-        }
-
-        // Rendering functions
-        function drawFlowerOfLife() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            // Create dark background
-            ctx.fillStyle = 'rgba(10, 10, 30, 1)';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            const baseRadius = Math.min(canvas.width, canvas.height) * 0.08;
-            const circles = getSacredGeometryPattern(centerX, centerY, baseRadius, frequency, complexity);
-            
-            // Draw circles with glowing effect
-            circles.forEach((circle, index) => {
-                // Only draw circles that fit within the canvas with some margin
-                const margin = 50;
-                if (circle.x - circle.radius > margin && 
-                    circle.x + circle.radius < canvas.width - margin &&
-                    circle.y - circle.radius > margin && 
-                    circle.y + circle.radius < canvas.height - margin) {
-                    
-                    ctx.save();
-                    
-                    // Animated glow intensity
-                    const glowIntensity = 0.7 + 0.3 * Math.sin(time * animationSpeed + index * 0.2);
-                    
-                    // Multiple glow layers for better effect
-                    const colors = [
-                        `rgba(0, 255, 200, ${glowIntensity * 0.8})`,
-                        `rgba(100, 255, 255, ${glowIntensity * 0.6})`,
-                        `rgba(200, 255, 255, ${glowIntensity * 0.4})`
-                    ];
-                    
-                    colors.forEach((color, layerIndex) => {
-                        ctx.strokeStyle = color;
-                        ctx.lineWidth = 3 - layerIndex;
-                        ctx.shadowColor = color;
-                        ctx.shadowBlur = 15 + layerIndex * 5;
-                        
-                        ctx.beginPath();
-                        ctx.arc(circle.x, circle.y, circle.radius, 0, 2 * Math.PI);
-                        ctx.stroke();
-                    });
-                    
-                    ctx.restore();
-                }
-            });
-            
-            // Draw outer boundary circle
-            const plateRadius = Math.min(canvas.width, canvas.height) * 0.47;
-            ctx.strokeStyle = 'rgba(100, 200, 255, 0.3)';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.arc(centerX, centerY, plateRadius, 0, 2 * Math.PI);
-            ctx.stroke();
-            
-            // Add frequency-based information display
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-            ctx.font = '14px Arial';
-            ctx.textAlign = 'center';
-            
-            let infoText = '';
-            if (frequency < 150) {
-                infoText = 'Single Circle - Foundation';
-            } else if (frequency < 300) {
-                infoText = 'Seed of Life - 7 Circles';
-            } else if (frequency < 450) {
-                infoText = 'Flower of Life - 19 Circles';
-            } else if (frequency < 600) {
-                infoText = 'Extended Pattern - 37 Circles';
-            } else if (frequency < 900) {
-                infoText = 'Complex Mandala - 61 Circles';
-            } else {
-                infoText = 'Sacred Geometry - 91+ Circles';
-            }
-            
-            ctx.fillText(infoText, centerX, canvas.height - 20);
-        }
-
-        function drawCircularWaves() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            for (let r = 10; r < 300; r += 5) {
-                const alpha = Math.abs(Math.sin(frequency / 100 * r / 10 + time * animationSpeed)) * (amplitude / 100);
-                const width = 2 + Math.sin(r / 10 + time) * complexity / 2;
-                
-                ctx.strokeStyle = `hsla(${180 + frequency / 10}, 70%, 60%, ${alpha})`;
-                ctx.lineWidth = width;
-                ctx.beginPath();
-                ctx.arc(centerX, centerY, r, 0, 2 * Math.PI);
-                ctx.stroke();
-            }
-        }
-
-        function drawFractalPattern() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            const maxIterations = complexity * 2;
-            const imageData = ctx.createImageData(canvas.width, canvas.height);
-            const data = imageData.data;
-            
-            for (let x = 0; x < canvas.width; x++) {
-                for (let y = 0; y < canvas.height; y++) {
-                    const nx = (x - centerX) / (amplitude * 2);
-                    const ny = (y - centerY) / (amplitude * 2);
-                    
-                    let zx = nx;
-                    let zy = ny;
-                    let iterations = 0;
-                    
-                    const c = frequency / 1000;
-                    
-                    while (zx * zx + zy * zy < 4 && iterations < maxIterations) {
-                        const temp = zx * zx - zy * zy + c * Math.cos(time * animationSpeed);
-                        zy = 2 * zx * zy + c * Math.sin(time * animationSpeed);
-                        zx = temp;
-                        iterations++;
-                    }
-                    
-                    const index = (y * canvas.width + x) * 4;
-                    const color = (iterations / maxIterations) * 255;
-                    
-                    data[index] = color * 0.5; // R
-                    data[index + 1] = color * 1.5; // G
-                    data[index + 2] = color * 0.8; // B
-                    data[index + 3] = 255; // A
-                }
-            }
-            
-            ctx.putImageData(imageData, 0, 0);
-        }
-
-        function drawInterferencePattern() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            const imageData = ctx.createImageData(canvas.width, canvas.height);
-            const data = imageData.data;
-            
-            const sources = [
-                { x: centerX - 50, y: centerY },
-                { x: centerX + 50, y: centerY },
-                { x: centerX, y: centerY - 50 * Math.sin(Math.PI / 3) }
-            ];
-            
-            for (let x = 0; x < canvas.width; x++) {
-                for (let y = 0; y < canvas.height; y++) {
-                    let totalWave = 0;
-                    
-                    sources.forEach(source => {
-                        const distance = Math.sqrt((x - source.x) ** 2 + (y - source.y) ** 2);
-                        const wave = Math.sin((frequency / 50) * distance + time * animationSpeed);
-                        totalWave += wave / sources.length;
-                    });
-                    
-                    const intensity = Math.abs(totalWave) * amplitude;
-                    const index = (y * canvas.width + x) * 4;
-                    
-                    if (intensity > 0.2) {
-                        const hue = (frequency / 10 + time * 50) % 360;
-                        const rgb = hslToRgb(hue / 360, 0.8, intensity / 100);
-                        
-                        data[index] = rgb.r; // R
-                        data[index + 1] = rgb.g; // G
-                        data[index + 2] = rgb.b; // B
-                        data[index + 3] = Math.min(255, intensity * 3); // A
-                    }
-                }
-            }
-            
-            ctx.putImageData(imageData, 0, 0);
-        }
-
-        function hslToRgb(h, s, l) {
-            let r, g, b;
-            
-            if (s === 0) {
-                r = g = b = l;
-            } else {
-                const hue2rgb = (p, q, t) => {
-                    if (t < 0) t += 1;
-                    if (t > 1) t -= 1;
-                    if (t < 1/6) return p + (q - p) * 6 * t;
-                    if (t < 1/2) return q;
-                    if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
-                    return p;
-                };
-                
-                const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
-                const p = 2 * l - q;
-                r = hue2rgb(p, q, h + 1/3);
-                g = hue2rgb(p, q, h);
-                b = hue2rgb(p, q, h - 1/3);
-            }
-            
-            return {
-                r: Math.round(r * 255),
-                g: Math.round(g * 255),
-                b: Math.round(b * 255)
-            };
-        }
-
-        // Animation loop
-        function animate() {
-            time += 0.05;
-            
-            switch(currentPattern) {
-                case 'flowerOfLife':
-                    drawFlowerOfLife();
-                    break;
-                case 'circular':
-                    drawCircularWaves();
-                    break;
-                case 'fractal':
-                    drawFractalPattern();
-                    break;
-                case 'interference':
-                    drawInterferencePattern();
-                    break;
-            }
-            
-            animationId = requestAnimationFrame(animate);
-        }
-
-        // Initialize and start animation
-        animate();
-
-        // Cleanup on page unload
-        window.addEventListener('beforeunload', () => {
-            stopTone();
-            if (animationId) {
-                cancelAnimationFrame(animationId);
-            }
-        });
-    </script>
+    // init labels
+    updateFreqDisplays();
+  </script>
 </body>
 </html>
