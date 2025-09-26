@@ -1,481 +1,708 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Interactive Cymatics Simulator</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
-  <style>
-    *{margin:0;padding:0;box-sizing:border-box}
-    body{
-      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
-      background:linear-gradient(135deg,#0c0c0c 0%,#1a1a2e 50%,#16213e 100%);
-      color:#fff;overflow-x:hidden;min-height:100vh
-    }
-    .container{display:flex;flex-direction:column;align-items:center;padding:20px;min-height:100vh}
-    .header{text-align:center;margin-bottom:30px;animation:glow 2s ease-in-out infinite alternate}
-    @keyframes glow{from{text-shadow:0 0 10px #00ff88,0 0 20px #00ff88}to{text-shadow:0 0 20px #00ff88,0 0 30px #00ff88}}
-    .header h1{font-size:2.5rem;margin-bottom:10px;background:linear-gradient(45deg,#00ff88,#00ccff);
-      -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-    .header p{font-size:1.05rem;opacity:.85;max-width:800px}
-    .visualization-container{position:relative;margin-bottom:30px;border-radius:20px;overflow:hidden;
-      box-shadow:0 20px 40px rgba(0,255,136,.2);background:rgba(255,255,255,.05);backdrop-filter:blur(10px)}
-    #canvas{display:block;background:radial-gradient(circle at center,#1a1a1a 0%,#000 100%);border-radius:20px}
-    .controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;max-width:1000px;width:100%}
-    .control-group{background:rgba(255,255,255,.1);padding:25px;border-radius:15px;backdrop-filter:blur(10px);
-      border:1px solid rgba(255,255,255,.1);transition:all .3s ease}
-    .control-group:hover{transform:translateY(-5px);box-shadow:0 10px 25px rgba(0,255,136,.2)}
-    .control-group h3{margin-bottom:15px;color:#00ff88;font-size:1.1rem}
-    .slider-container{margin-bottom:18px}
-    .slider-container label{display:block;margin-bottom:8px;font-weight:600}
-    .slider{width:100%;-webkit-appearance:none;height:8px;background:linear-gradient(90deg,#333,#666);
-      border-radius:5px;outline:none;margin-bottom:6px}
-    .slider::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;background:linear-gradient(45deg,#00ff88,#00ccff);
-      border-radius:50%;cursor:pointer;box-shadow:0 0 10px rgba(0,255,136,.5)}
-    .slider::-moz-range-thumb{width:20px;height:20px;background:linear-gradient(45deg,#00ff88,#00ccff);
-      border-radius:50%;cursor:pointer;box-shadow:0 0 10px rgba(0,255,136,.5);border:none}
-    .value-display{text-align:center;font-size:.9rem;opacity:.85}
-    button{background:linear-gradient(45deg,#00ff88,#00ccff);color:#000;border:none;padding:12px 20px;border-radius:25px;
-      cursor:pointer;font-size:1rem;font-weight:700;transition:all .25s ease;margin:5px}
-    button:hover{transform:scale(1.05);box-shadow:0 5px 15px rgba(0,255,136,.4)}
-    button:disabled{opacity:.5;cursor:not-allowed;transform:none}
-    .pattern-buttons{display:flex;flex-wrap:wrap;gap:10px}
-    .info-panel{background:rgba(255,255,255,.1);padding:20px;border-radius:15px;margin-top:20px;max-width:800px;
-      backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.1)}
-    .frequency-display{font-size:1.4rem;font-weight:800;color:#00ff88;text-align:center;margin:10px 0;
-      text-shadow:0 0 10px rgba(0,255,136,.5)}
-    .active-pattern{outline:2px solid #00ff88;transform:scale(1.05)}
-    .unlock{margin-top:10px;font-size:.95rem;opacity:.8}
-    @media (max-width:768px){
-      .header h1{font-size:2rem}
-      #canvas{width:350px !important;height:350px !important}
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Interactive Cymatics Simulator</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+    background:linear-gradient(135deg,#0c0c0c 0%,#1a1a2e 50%,#16213e 100%);
+    color:#fff;overflow-x:hidden;min-height:100vh
+  }
+  .container{display:flex;flex-direction:column;align-items:center;padding:20px;gap:14px}
+  .header{text-align:center;margin-bottom:6px;animation:glow 2s ease-in-out infinite alternate}
+  @keyframes glow{from{text-shadow:0 0 10px #00ff88,0 0 20px #00ff88}to{text-shadow:0 0 20px #00ff88,0 0 30px #00ff88}}
+  .header h1{font-size:2.2rem;margin-bottom:8px;background:linear-gradient(45deg,#00ff88,#00ccff);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  .header p{font-size:1.0rem;opacity:.85;max-width:900px}
+  .unlock{margin-top:8px;font-size:.95rem;opacity:.8}
+  .visualization-container{position:relative;border-radius:20px;overflow:hidden;
+    box-shadow:0 20px 40px rgba(0,255,136,.2);background:rgba(255,255,255,.05);backdrop-filter:blur(10px)}
+  #canvas{display:block;background:radial-gradient(circle at center,#111 0%,#000 100%);border-radius:20px}
+  .frequency-display{font-size:1.2rem;font-weight:800;color:#00ff88;text-align:center; text-shadow:0 0 10px rgba(0,255,136,.5)}
+  .controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;max-width:1200px;width:100%}
+  .control-group{background:rgba(255,255,255,.1);padding:18px;border-radius:15px;backdrop-filter:blur(10px);
+    border:1px solid rgba(255,255,255,.12);transition:all .25s ease}
+  .control-group:hover{transform:translateY(-3px);box-shadow:0 10px 25px rgba(0,255,136,.18)}
+  .control-group h3{margin-bottom:10px;color:#00ff88;font-size:1.05rem}
+  .row{display:flex;gap:10px;flex-wrap:wrap}
+  .slider-container{margin-bottom:12px}
+  .slider-container label{display:flex;justify-content:space-between;margin-bottom:6px;font-weight:600;gap:10px}
+  .slider{width:100%;-webkit-appearance:none;height:8px;background:linear-gradient(90deg,#333,#666);
+    border-radius:5px;outline:none;margin-bottom:6px}
+  .slider::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;background:linear-gradient(45deg,#00ff88,#00ccff);
+    border-radius:50%;cursor:pointer;box-shadow:0 0 10px rgba(0,255,136,.5)}
+  .slider::-moz-range-thumb{width:18px;height:18px;background:linear-gradient(45deg,#00ff88,#00ccff);
+    border-radius:50%;cursor:pointer;box-shadow:0 0 10px rgba(0,255,136,.5);border:none}
+  .value-display{text-align:right;font-size:.9rem;opacity:.9}
+  select, .select{width:100%;padding:8px;border-radius:10px;border:none;background:#0f1a2c;color:#cfe;
+    outline:1px solid rgba(255,255,255,.12)}
+  button{background:linear-gradient(45deg,#00ff88,#00ccff);color:#000;border:none;padding:10px 16px;border-radius:22px;
+    cursor:pointer;font-size:.95rem;font-weight:700;transition:all .2s ease}
+  button:hover{transform:translateY(-1px);box-shadow:0 5px 15px rgba(0,255,136,.35)}
+  button:disabled{opacity:.5;cursor:not-allowed;transform:none}
+  .pattern-buttons,.preset-buttons{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{background:#0f1a2c;border:1px solid rgba(255,255,255,.15);color:#cfe}
+  .chip.active{outline:2px solid #00ff88;transform:scale(1.03)}
+  .info-panel{background:rgba(255,255,255,.1);padding:16px;border-radius:15px;margin-top:8px;max-width:900px;
+    backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.12);line-height:1.55}
+  .muted{opacity:.6}
+  @media (max-width:768px){#canvas{width:350px !important;height:350px !important}.header h1{font-size:1.7rem}}
+  @media print{body{background:#fff;color:#000}.container{padding:0}.visualization-container,#canvas,.controls{display:none}}
+</style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <h1>Interactive Cymatics Simulator</h1>
-      <p>Explore the beautiful intersection of sound and physics. Watch how different tones add complexity as frequencies change — revealing emergent geometry.</p>
-      <div id="unlockHint" class="unlock" style="display:none;">🔊 Tap “Play Tone” once to enable audio.</div>
-    </div>
+<div class="container">
+  <div class="header">
+    <h1>Interactive Cymatics Simulator</h1>
+    <p>Explore sound-made-visible. Patterns form as standing waves and interference emerge across media. Listen, look, and measure.</p>
+    <div id="unlockHint" class="unlock" style="display:none;">🔊 Tap any audio control once to enable sound on this device.</div>
+  </div>
 
-    <div class="visualization-container">
-      <canvas id="canvas" width="500" height="500"></canvas>
-    </div>
+  <div class="visualization-container">
+    <canvas id="canvas" width="520" height="520"></canvas>
+  </div>
 
-    <div class="frequency-display" id="frequencyDisplay">440 Hz (A4)</div>
+  <div class="frequency-display" id="frequencyDisplay">440 Hz (A4)</div>
 
-    <div class="controls">
-      <div class="control-group">
-        <h3>🎵 Sound Controls</h3>
-        <div class="slider-container">
-          <label for="frequency">Frequency</label>
-          <input type="range" id="frequency" class="slider" min="20" max="2000" value="440" step="1">
-          <div class="value-display" id="freqValue">440 Hz (A4)</div>
-        </div>
-        <div class="slider-container">
-          <label for="volume">Volume</label>
+  <div class="controls">
+    <!-- SOUND -->
+    <div class="control-group">
+      <h3>🎵 Sound</h3>
+      <div class="slider-container">
+        <label><span>Frequency</span><span id="freqLabel" class="value-display">440 Hz (A4)</span></label>
+        <input type="range" id="frequency" class="slider" min="20" max="2000" value="440" step="1">
+      </div>
+
+      <div class="row">
+        <div style="flex:1" class="slider-container">
+          <label><span>Volume</span><span id="volValue" class="value-display">50%</span></label>
           <input type="range" id="volume" class="slider" min="0" max="100" value="50" step="1">
-          <div class="value-display" id="volValue">50%</div>
         </div>
-        <div class="slider-container">
+        <div style="flex:1">
           <label for="wave">Waveform</label>
-          <select id="wave" style="width:100%;padding:8px;border-radius:10px;border:none">
+          <select id="wave">
             <option value="sine" selected>Sine (clean)</option>
             <option value="triangle">Triangle</option>
             <option value="square">Square (rich)</option>
             <option value="sawtooth">Sawtooth (bright)</option>
           </select>
         </div>
-        <button id="playBtn">▶ Play Tone</button>
+      </div>
+
+      <div class="row">
+        <div style="flex:1">
+          <label for="snap">Snap</label>
+          <select id="snap">
+            <option value="off" selected>Off</option>
+            <option value="et">Equal Temperament</option>
+            <option value="ji">Just Intonation (A tonic)</option>
+          </select>
+        </div>
+        <div style="flex:1">
+          <label for="medium">Plate / Medium</label>
+          <select id="medium">
+            <option value="metal" selected>Small Metal Plate</option>
+            <option value="water">Water Dish</option>
+            <option value="drum">Drum Head</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row">
+        <button id="playBtn">▶ Play</button>
         <button id="stopBtn" disabled>⏸ Stop</button>
         <button id="muteBtn">🔇 Mute</button>
+        <button id="sweepBtn" class="chip">⟲ Slow Sweep</button>
+        <button id="safeBtn" class="chip">🛡 Safe Mode: Off</button>
+        <button id="hapticBtn" class="chip">📳 Haptics: Off</button>
       </div>
 
-      <div class="control-group">
-        <h3>🎨 Visual Parameters</h3>
-        <div class="slider-container">
-          <label for="complexity">Pattern Complexity</label>
-          <input type="range" id="complexity" class="slider" min="1" max="10" value="5" step="1">
-          <div class="value-display" id="compValue">5</div>
-        </div>
-        <div class="slider-container">
-          <label for="amplitude">Circle Brightness</label>
-          <input type="range" id="amplitude" class="slider" min="10" max="200" value="80" step="5">
-          <div class="value-display" id="ampValue">80</div>
-        </div>
-        <div class="slider-container">
-          <label for="speed">Animation Speed</label>
-          <input type="range" id="speed" class="slider" min="0.1" max="3" value="1" step="0.1">
-          <div class="value-display" id="speedValue">1.0x</div>
-        </div>
-      </div>
-
-      <div class="control-group">
-        <h3>🔬 Preset Frequencies</h3>
-        <div class="pattern-buttons" id="presetButtons">
-          <button data-freq="110">110 Hz (A2)</button>
-          <button data-freq="220">220 Hz (A3)</button>
-          <button data-freq="440" class="active-pattern">440 Hz (A4)</button>
-          <button data-freq="528">528 Hz</button>
-          <button data-freq="741">741 Hz</button>
-          <button data-freq="852">852 Hz</button>
-        </div>
-      </div>
-
-      <div class="control-group">
-        <h3>🌀 Pattern Types</h3>
-        <div class="pattern-buttons">
-          <button id="flowerOfLifeBtn" class="active-pattern" onclick="setPattern('flowerOfLife')">Flower of Life</button>
-          <button id="circularBtn" onclick="setPattern('circular')">Circular Waves</button>
-          <button id="fractalBtn" onclick="setPattern('fractal')">Fractal Pattern</button>
-          <button id="interferenceBtn" onclick="setPattern('interference')">Wave Interference</button>
-        </div>
+      <div style="margin-top:8px">
+        <small class="muted">Tip: Safe Mode limits loudness and high frequencies. Use headphones responsibly.</small>
       </div>
     </div>
 
-    <div class="info-panel">
-      <h3>About Cymatics & Flower of Life</h3>
-      <p>Cymatics is the study of visible sound and vibration, where patterns emerge on vibrating surfaces at different frequencies. The term was popularized by Hans Jenny building on earlier work by Chladni with sand plates. While the visual motifs can resemble “sacred geometry,” what you’re seeing here are standing-wave patterns and interference from periodic excitation.</p>
+    <!-- PARTIALS -->
+    <div class="control-group">
+      <h3>🔊 Harmonic Partials Mixer</h3>
+      <div class="slider-container">
+        <label><span>2× (2nd harmonic)</span><span id="p2v" class="value-display">20%</span></label>
+        <input type="range" id="p2" class="slider" min="0" max="100" value="20" step="1">
+      </div>
+      <div class="slider-container">
+        <label><span>3× (3rd harmonic)</span><span id="p3v" class="value-display">10%</span></label>
+        <input type="range" id="p3" class="slider" min="0" max="100" value="10" step="1">
+      </div>
+      <div class="slider-container">
+        <label><span>4× (4th harmonic)</span><span id="p4v" class="value-display">5%</span></label>
+        <input type="range" id="p4" class="slider" min="0" max="100" value="5" step="1">
+      </div>
+      <small class="muted">These add gentle overtones for richer timbre and more complex nodal patterns.</small>
+    </div>
+
+    <!-- VISUALS -->
+    <div class="control-group">
+      <h3>🎨 Visual Parameters</h3>
+      <div class="slider-container">
+        <label><span>Pattern Complexity</span><span id="compValue" class="value-display">5</span></label>
+        <input type="range" id="complexity" class="slider" min="1" max="10" value="5" step="1">
+      </div>
+      <div class="slider-container">
+        <label><span>Brightness</span><span id="ampValue" class="value-display">80</span></label>
+        <input type="range" id="amplitude" class="slider" min="10" max="200" value="80" step="5">
+      </div>
+      <div class="slider-container">
+        <label><span>Animation Speed</span><span id="speedValue" class="value-display">1.0×</span></label>
+        <input type="range" id="speed" class="slider" min="0.1" max="3" value="1" step="0.1">
+      </div>
+      <div class="row preset-buttons" id="presetButtons">
+        <button class="chip active" data-freq="110">110 (A2)</button>
+        <button class="chip" data-freq="220">220 (A3)</button>
+        <button class="chip" data-freq="440">440 (A4)</button>
+        <button class="chip" data-freq="528">528</button>
+        <button class="chip" data-freq="741">741</button>
+        <button class="chip" data-freq="852">852</button>
+      </div>
+    </div>
+
+    <!-- PATTERNS & TASKS -->
+    <div class="control-group">
+      <h3>🌀 Pattern Types</h3>
+      <div class="pattern-buttons">
+        <button id="flowerOfLifeBtn" class="chip active" onclick="setPattern('flowerOfLife')">Flower of Life</button>
+        <button id="circularBtn"     class="chip" onclick="setPattern('circular')">Circular Waves</button>
+        <button id="fractalBtn"      class="chip" onclick="setPattern('fractal')">Fractal Pattern</button>
+        <button id="interferenceBtn" class="chip" onclick="setPattern('interference')">Wave Interference</button>
+      </div>
+      <hr style="opacity:.2;margin:12px 0">
+      <h3>🧪 Guided Tasks</h3>
+      <ol id="tasks" style="margin-left:18px">
+        <li>Start at 110 Hz and slowly increase. Pause when you notice a 6-fold symmetry. Record the frequency.</li>
+        <li>Enable partials (2×, 3×). Describe how the pattern changes compared to pure sine.</li>
+        <li>Switch Medium to “Water Dish.” How do the boundaries/brightness feel different?</li>
+        <li>Run the Sweep. At what range do patterns change the fastest?</li>
+      </ol>
+      <div class="row" style="margin-top:8px">
+        <button id="printBtn" class="chip">🖨 Print Worksheet</button>
+      </div>
     </div>
   </div>
 
-  <script>
-    // -------- Audio graph (robust & click-free) --------
-    let osc = null;
-    let ampEnv = null;
-    const gain = new Tone.Gain(0.5);
-    const limiter = new Tone.Limiter(-3).toDestination(); // safety
-    gain.connect(limiter);
+  <div class="info-panel">
+    <h3>About Cymatics</h3>
+    <p>Cymatics visualizes standing waves and interference on or within a medium (metal, water, membranes). As frequency and boundary conditions change, nodal lines arrange into geometric motifs. What you see here is a qualitative simulation — driven by the <em>actual audio</em> you hear — designed for exploration and discussion.</p>
+  </div>
+</div>
 
-    let isPlaying = false;
-    let isMuted = false;
+<script>
+/* ===================== Audio Graph ===================== */
+let oscFund = null, osc2 = null, osc3 = null, osc4 = null;
+let envFund = null, env2 = null, env3 = null, env4 = null;
 
-    async function ensureAudio() {
-      if (Tone.context.state !== 'running') {
-        try {
-          await Tone.start();
-          document.getElementById('unlockHint').style.display = 'none';
-        } catch {
-          document.getElementById('unlockHint').style.display = 'block';
-        }
-      }
+const masterGain = new Tone.Gain(0.5);
+const limiter = new Tone.Limiter(-3).toDestination();
+masterGain.connect(limiter);
+
+const analyser = new Tone.Analyser('fft', 1024);
+const waveform = new Tone.Analyser('waveform', 1024);
+masterGain.connect(analyser);
+masterGain.connect(waveform);
+
+let isPlaying = false, isMuted = false, safeMode = false, haptics = false, sweepRunning = false;
+
+async function ensureAudio(){
+  if (Tone.context.state !== 'running') {
+    try {
+      await Tone.start();
+      document.getElementById('unlockHint').style.display='none';
+    } catch(e){
+      document.getElementById('unlockHint').style.display='block';
     }
+  }
+}
+document.body.addEventListener('pointerdown', ensureAudio, { once:true });
 
-    // -------- UI refs --------
-    const freqSlider = document.getElementById('frequency');
-    const volSlider  = document.getElementById('volume');
-    const waveSel    = document.getElementById('wave');
-    const freqDisplay= document.getElementById('frequencyDisplay');
-    const freqValue  = document.getElementById('freqValue');
-    const volValue   = document.getElementById('volValue');
-    const playBtn    = document.getElementById('playBtn');
-    const stopBtn    = document.getElementById('stopBtn');
-    const muteBtn    = document.getElementById('muteBtn');
+/* ===================== UI Refs & State ===================== */
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const centerX = canvas.width/2, centerY = canvas.height/2;
 
-    const compSlider = document.getElementById('complexity');
-    const ampSlider  = document.getElementById('amplitude');
-    const speedSlider= document.getElementById('speed');
-    const compValue  = document.getElementById('compValue');
-    const ampValue   = document.getElementById('ampValue');
-    const speedValue = document.getElementById('speedValue');
+const freqSlider = document.getElementById('frequency');
+const volSlider  = document.getElementById('volume');
+const waveSel    = document.getElementById('wave');
+const snapSel    = document.getElementById('snap');
+const mediumSel  = document.getElementById('medium');
 
-    // -------- State for visuals --------
-    const canvas = document.getElementById('canvas');
-    const ctx = canvas.getContext('2d');
-    const centerX = canvas.width/2, centerY = canvas.height/2;
+const freqLabel  = document.getElementById('freqLabel');
+const freqDisplay= document.getElementById('frequencyDisplay');
+const volValue   = document.getElementById('volValue');
 
-    let animationId, time = 0, currentPattern = 'flowerOfLife';
-    let frequency = parseFloat(freqSlider.value);
-    let complexity = parseInt(compSlider.value,10);
-    let amplitude = parseInt(ampSlider.value,10);
-    let animationSpeed = parseFloat(speedSlider.value);
+const p2 = document.getElementById('p2'), p3 = document.getElementById('p3'), p4 = document.getElementById('p4');
+const p2v = document.getElementById('p2v'), p3v = document.getElementById('p3v'), p4v = document.getElementById('p4v');
 
-    // -------- Helpers --------
-    function linVolFromPercent(pct){ return Math.max(0, Math.min(1, pct/100)); }
-    function nearestNoteName(freq){
-      const A4 = 440;
-      const n = 12 * Math.log2(freq / A4);
-      const rounded = Math.round(n);
-      const noteIdx = (rounded + 9 + 1200) % 12; // C=0 mapping trick
-      const notes = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
-      const note = notes[noteIdx];
-      const octave = 4 + Math.floor((rounded + 9) / 12);
-      return `${note}${octave}`;
-    }
-    function updateFreqDisplays(){
-      const note = nearestNoteName(frequency);
-      freqValue.textContent = `${frequency} Hz (${note})`;
-      freqDisplay.textContent = `${frequency} Hz (${note})`;
-    }
+const playBtn = document.getElementById('playBtn'), stopBtn=document.getElementById('stopBtn');
+const muteBtn = document.getElementById('muteBtn'), sweepBtn=document.getElementById('sweepBtn');
+const safeBtn = document.getElementById('safeBtn'), hapticBtn=document.getElementById('hapticBtn');
+const printBtn= document.getElementById('printBtn');
 
-    // -------- Event wiring --------
-    document.body.addEventListener('pointerdown', ensureAudio, { once:true });
+const compSlider = document.getElementById('complexity');
+const ampSlider  = document.getElementById('amplitude');
+const speedSlider= document.getElementById('speed');
+const compValue  = document.getElementById('compValue');
+const ampValue   = document.getElementById('ampValue');
+const speedValue = document.getElementById('speedValue');
 
-    freqSlider.addEventListener('input', e=>{
-      frequency = parseFloat(e.target.value);
-      updateFreqDisplays();
-      if (osc) osc.frequency.setValueAtTime(frequency, Tone.now());
+let animationId, time=0, currentPattern='flowerOfLife';
+let frequency = parseFloat(freqSlider.value);
+let complexity = parseInt(compSlider.value,10);
+let amplitude  = parseInt(ampSlider.value,10);
+let animationSpeed = parseFloat(speedSlider.value);
+
+/* ===================== Helpers ===================== */
+function linVol(p){ return Math.max(0, Math.min(1, p/100)); }
+function clamp(v,min,max){ return Math.max(min, Math.min(max,v)); }
+
+function nearestNoteName(freq){
+  const A4 = 440;
+  const n = 12 * Math.log2(freq / A4);
+  const r = Math.round(n);
+  const idx = (r + 9 + 1200) % 12;
+  const notes = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+  const note = notes[idx];
+  const oct = 4 + Math.floor((r + 9) / 12);
+  return `${note}${oct}`;
+}
+function updateFreqDisplays(){
+  const note = nearestNoteName(frequency);
+  freqLabel.textContent = `${frequency} Hz (${note})`;
+  freqDisplay.textContent = `${frequency} Hz (${note})`;
+}
+function snapFrequency(raw){
+  const mode = snapSel.value;
+  if (mode==='off') return raw;
+  if (mode==='et'){ // equal temperament
+    const n = Math.round(12*Math.log2(raw/440));
+    return +(440 * Math.pow(2, n/12)).toFixed(2);
+  }
+  // Just intonation (A tonic): small ratio set
+  const ratios = [1, 9/8, 5/4, 4/3, 3/2, 5/3, 15/8, 2];
+  let best = raw, minDiff = Infinity;
+  const aMult = raw/440;
+  // fit nearest power-of-2 octave and ratio
+  for (let k=-3;k<=3;k++){
+    const base = 440*Math.pow(2,k);
+    ratios.forEach(r=>{
+      const f = base*r;
+      const d = Math.abs(f-raw);
+      if (d<minDiff){minDiff=d;best=f;}
     });
+  }
+  return +best.toFixed(2);
+}
 
-    volSlider.addEventListener('input', e=>{
-      const pct = parseInt(e.target.value,10);
-      volValue.textContent = `${pct}%`;
-      gain.gain.linearRampToValueAtTime(linVolFromPercent(pct), Tone.now() + 0.03);
-    });
+function setMediumParams(){
+  // adjust visual reactivity presets
+  const v = mediumSel.value;
+  if (v==='metal'){ medium = {damping:0.92, reactivity:1.0, ripple:1.0}; }
+  else if (v==='water'){ medium = {damping:0.85, reactivity:1.3, ripple:1.4}; }
+  else { medium = {damping:0.9,  reactivity:1.15, ripple:1.2}; } // drum
+}
+let medium = {damping:0.92, reactivity:1.0, ripple:1.0};
+setMediumParams();
 
-    waveSel.addEventListener('change', e=>{
-      if (osc) osc.type = e.target.value;
-    });
+/* ===================== Events ===================== */
+freqSlider.addEventListener('input', e=>{
+  let f = parseFloat(e.target.value);
+  f = snapFrequency(f);
+  frequency = f;
+  freqSlider.value = f;
+  updateFreqDisplays();
+  if (oscFund) {
+    oscFund.frequency.setValueAtTime(f, Tone.now());
+    if (osc2) osc2.frequency.setValueAtTime(f*2, Tone.now());
+    if (osc3) osc3.frequency.setValueAtTime(f*3, Tone.now());
+    if (osc4) osc4.frequency.setValueAtTime(f*4, Tone.now());
+  }
+});
+volSlider.addEventListener('input', e=>{
+  const pct = parseInt(e.target.value,10);
+  volValue.textContent = `${pct}%`;
+  masterGain.gain.linearRampToValueAtTime(linVol(pct)*(safeMode?0.6:1), Tone.now()+0.03);
+});
+waveSel.addEventListener('change', e=>{
+  const t = e.target.value;
+  [oscFund,osc2,osc3,osc4].forEach(o=>{ if(o) o.type=t; });
+});
+snapSel.addEventListener('change', ()=>{
+  // resnap current
+  const f = snapFrequency(parseFloat(freqSlider.value));
+  frequency = f; freqSlider.value=f; updateFreqDisplays();
+  if (oscFund){ oscFund.frequency.setValueAtTime(f, Tone.now());
+    if (osc2) osc2.frequency.setValueAtTime(f*2, Tone.now());
+    if (osc3) osc3.frequency.setValueAtTime(f*3, Tone.now());
+    if (osc4) osc4.frequency.setValueAtTime(f*4, Tone.now());
+  }
+});
+mediumSel.addEventListener('change', setMediumParams);
 
-    compSlider.addEventListener('input', e=>{
-      complexity = parseInt(e.target.value,10);
-      compValue.textContent = complexity;
-    });
+[p2,p3,p4].forEach(sl=>{
+  sl.addEventListener('input', ()=>{
+    p2v.textContent = `${p2.value}%`;
+    p3v.textContent = `${p3.value}%`;
+    p4v.textContent = `${p4.value}%`;
+    // update gains live
+    if (osc2) osc2.volume.value = -12 + (parseInt(p2.value)-50)/5;
+    if (osc3) osc3.volume.value = -15 + (parseInt(p3.value)-50)/6;
+    if (osc4) osc4.volume.value = -18 + (parseInt(p4.value)-50)/7;
+  });
+});
 
-    ampSlider.addEventListener('input', e=>{
-      amplitude = parseInt(e.target.value,10);
-      ampValue.textContent = amplitude;
-    });
+document.getElementById('presetButtons').addEventListener('click', e=>{
+  if (e.target.matches('button[data-freq]')){
+    document.querySelectorAll('#presetButtons .chip').forEach(b=>b.classList.remove('active'));
+    e.target.classList.add('active');
+    setFrequency(parseFloat(e.target.getAttribute('data-freq')));
+  }
+});
 
-    speedSlider.addEventListener('input', e=>{
-      animationSpeed = parseFloat(e.target.value);
-      speedValue.textContent = animationSpeed.toFixed(1) + 'x';
-    });
+playBtn.addEventListener('click', async ()=>{ await ensureAudio(); startTone(); });
+stopBtn.addEventListener('click', stopTone);
+muteBtn.addEventListener('click', ()=>{
+  isMuted = !isMuted; masterGain.mute = isMuted;
+  muteBtn.textContent = isMuted ? '🔈 Unmute' : '🔇 Mute';
+});
+sweepBtn.addEventListener('click', ()=>{ if (!sweepRunning) startSweep(); else sweepRunning=false; });
+safeBtn.addEventListener('click', ()=>{
+  safeMode = !safeMode;
+  safeBtn.textContent = `🛡 Safe Mode: ${safeMode?'On':'Off'}`;
+  if (safeMode){
+    // cap frequency & volume gently
+    freqSlider.max = 5000; // UI safeguard
+    masterGain.gain.linearRampToValueAtTime(linVol(parseInt(volSlider.value))*0.6, Tone.now()+0.05);
+  } else {
+    freqSlider.max = 20000; // allow if you expand later; UI still shows 2000 default
+  }
+});
+hapticBtn.addEventListener('click', ()=>{
+  haptics = !haptics; hapticBtn.textContent = `📳 Haptics: ${haptics?'On':'Off'}`;
+});
 
-    // Preset frequency buttons
-    document.getElementById('presetButtons').addEventListener('click', e=>{
-      if(e.target.matches('button[data-freq]')){
-        const f = parseFloat(e.target.getAttribute('data-freq'));
-        setFrequency(f);
-        // visual active state
-        document.querySelectorAll('#presetButtons button').forEach(b=>b.classList.remove('active-pattern'));
-        e.target.classList.add('active-pattern');
-      }
-    });
+compSlider.addEventListener('input', e=>{ complexity = parseInt(e.target.value,10); compValue.textContent = complexity; });
+ampSlider.addEventListener('input', e=>{ amplitude = parseInt(e.target.value,10); ampValue.textContent = amplitude; });
+speedSlider.addEventListener('input', e=>{ animationSpeed = parseFloat(e.target.value); speedValue.textContent = animationSpeed.toFixed(1)+'×'; });
 
-    // Play / Stop / Mute
-    playBtn.addEventListener('click', async ()=>{
-      await ensureAudio();
-      startTone();
-    });
-    stopBtn.addEventListener('click', stopTone);
-    muteBtn.addEventListener('click', ()=>{
-      isMuted = !isMuted;
-      gain.mute = isMuted;
-      muteBtn.textContent = isMuted ? '🔈 Unmute' : '🔇 Mute';
-    });
+printBtn.addEventListener('click', ()=>{ window.print(); });
 
-    // -------- Tone control --------
-    function startTone(){
-      if (isPlaying) return;
+/* ===================== Tone control ===================== */
+function createOsc(freq, type, volDb){
+  const o = new Tone.Oscillator(freq, type);
+  o.volume.value = volDb;
+  return o;
+}
+function startTone(){
+  if (isPlaying) return;
 
-      // Create oscillator & envelope on each start (simple lifecycle)
-      osc = new Tone.Oscillator(frequency, waveSel.value);
-      ampEnv = new Tone.AmplitudeEnvelope({
-        attack: 0.01, decay: 0.05, sustain: 0.95, release: 0.2
-      });
+  // envelope per oscillator for click-free starts
+  envFund = new Tone.AmplitudeEnvelope({attack:0.01,decay:0.05,sustain:0.95,release:0.2});
+  env2    = new Tone.AmplitudeEnvelope({attack:0.01,decay:0.07,sustain:0.9, release:0.25});
+  env3    = new Tone.AmplitudeEnvelope({attack:0.01,decay:0.08,sustain:0.85,release:0.25});
+  env4    = new Tone.AmplitudeEnvelope({attack:0.01,decay:0.1, sustain:0.8, release:0.3});
 
-      osc.connect(ampEnv).connect(gain);
+  oscFund = createOsc(frequency, waveSel.value, -6);
+  osc2    = createOsc(frequency*2, waveSel.value, -12 + (parseInt(p2.value)-50)/5);
+  osc3    = createOsc(frequency*3, waveSel.value, -15 + (parseInt(p3.value)-50)/6);
+  osc4    = createOsc(frequency*4, waveSel.value, -18 + (parseInt(p4.value)-50)/7);
 
-      // set current gain from slider
-      gain.gain.value = linVolFromPercent(parseInt(volSlider.value,10));
+  oscFund.connect(envFund).connect(masterGain);
+  osc2.connect(env2).connect(masterGain);
+  osc3.connect(env3).connect(masterGain);
+  osc4.connect(env4).connect(masterGain);
 
-      osc.start();
-      ampEnv.triggerAttack(Tone.now());
+  const g = linVol(parseInt(volSlider.value,10))*(safeMode?0.6:1);
+  masterGain.gain.value = g;
 
-      isPlaying = true;
-      playBtn.disabled = true;
-      stopBtn.disabled = false;
-    }
+  const now = Tone.now();
+  [oscFund,osc2,osc3,osc4].forEach(o=>o.start(now));
+  [envFund,env2,env3,env4].forEach(e=>e.triggerAttack(now));
 
-    function stopTone(){
-      if (!isPlaying) return;
-      const now = Tone.now();
-      ampEnv.triggerRelease(now);
-      // stop the osc slightly after release to avoid clicks
-      osc.stop(now + 0.25);
+  isPlaying = true;
+  playBtn.disabled = true; stopBtn.disabled = false;
+}
+function stopTone(){
+  if (!isPlaying) return;
+  const now = Tone.now();
+  [envFund,env2,env3,env4].forEach(e=>{ if(e) e.triggerRelease(now); });
+  [oscFund,osc2,osc3,osc4].forEach(o=>{ if(o) o.stop(now+0.3); });
 
-      // cleanup after release completes
-      setTimeout(()=>{
-        if (osc){ osc.dispose(); osc = null; }
-        if (ampEnv){ ampEnv.dispose(); ampEnv = null; }
-      }, 300);
+  setTimeout(()=>{
+    [oscFund,osc2,osc3,osc4,envFund,env2,env3,env4].forEach(n=>{ if(n && n.dispose) n.dispose(); });
+    oscFund=osc2=osc3=osc4=envFund=env2=env3=env4=null;
+  }, 400);
 
-      isPlaying = false;
-      playBtn.disabled = false;
-      stopBtn.disabled = true;
-    }
+  isPlaying=false; playBtn.disabled=false; stopBtn.disabled=true; sweepRunning=false;
+}
+function setFrequency(freq){
+  let f = snapFrequency(freq);
+  frequency = clamp(f, 20, safeMode ? 5000 : 20000);
+  freqSlider.value = Math.min(frequency, 2000); // UI slider range; audio can exceed
+  updateFreqDisplays();
+  if (oscFund){
+    oscFund.frequency.setValueAtTime(frequency, Tone.now());
+    if (osc2) osc2.frequency.setValueAtTime(frequency*2, Tone.now());
+    if (osc3) osc3.frequency.setValueAtTime(frequency*3, Tone.now());
+    if (osc4) osc4.frequency.setValueAtTime(frequency*4, Tone.now());
+  }
+}
+async function startSweep(){
+  sweepRunning = true;
+  await ensureAudio();
+  if(!isPlaying) startTone();
+  const start = 50, end = 1500, dur = 20; // seconds
+  const t0 = performance.now()/1000;
+  function step(){
+    if(!sweepRunning) return;
+    const t = performance.now()/1000 - t0;
+    const u = clamp(t/dur,0,1);
+    const f = start * Math.pow(end/start, u); // exponential sweep
+    setFrequency(f);
+    if(u<1) requestAnimationFrame(step); else sweepRunning=false;
+  }
+  requestAnimationFrame(step);
+}
 
-    function setFrequency(freq){
-      frequency = Math.max(20, Math.min(20000, freq));
-      freqSlider.value = frequency;
-      updateFreqDisplays();
-      if (osc){ osc.frequency.setValueAtTime(frequency, Tone.now()); }
-    }
+/* ===================== Visual Geometry ===================== */
+function getFlowerOfLifeCircles(cx, cy, baseR, rings){
+  const circles=[{x:cx,y:cy,radius:baseR}];
+  const add=(count,dist)=>{for(let i=0;i<count;i++){const a=i*2*Math.PI/count;circles.push({x:cx+Math.cos(a)*dist,y:cy+Math.sin(a)*dist,radius:baseR});}};
+  if(rings>=1) add(6, baseR*1.0);
+  if(rings>=2) add(12,baseR*2.0);
+  if(rings>=3) add(18,baseR*3.0);
+  if(rings>=4) add(24,baseR*4.0);
+  if(rings>=5) add(30,baseR*5.0);
+  return circles;
+}
+function getSacredGeometryPattern(cx, cy, baseR, f, comp){
+  if (f<150) return [{x:cx,y:cy,radius:baseR*2}];
+  if (f<300) return getFlowerOfLifeCircles(cx,cy,baseR, Math.min(1, Math.floor(comp/2)));
+  if (f<450) return getFlowerOfLifeCircles(cx,cy,baseR, Math.min(2, Math.floor(comp/2)+1));
+  if (f<600) return getFlowerOfLifeCircles(cx,cy,baseR, Math.min(3, Math.floor(comp/2)+1));
+  if (f<900) return getFlowerOfLifeCircles(cx,cy,baseR*0.85, Math.min(4, comp));
+  return getFlowerOfLifeCircles(cx,cy,baseR*0.75, Math.min(5, comp+1));
+}
 
-    function setPattern(pattern){
-      currentPattern = pattern;
-      document.querySelectorAll('.pattern-buttons button[id$="Btn"]').forEach(btn=>btn.classList.remove('active-pattern'));
-      const el = document.getElementById(pattern+'Btn');
-      if (el) el.classList.add('active-pattern');
-    }
+/* ===================== Audio→Visual Reactivity ===================== */
+function getRMS(){
+  const arr = waveform.getValue();
+  if (!arr || !arr.length || arr[0]===undefined) return 0;
+  let sum=0; for (let i=0;i<arr.length;i++) sum += arr[i]*arr[i];
+  return Math.sqrt(sum/arr.length); // 0..~1
+}
+function bandEnergy(centerHz, bwOct=1/6){
+  // approximate energy around a center frequency using FFT bins
+  const spec = analyser.getValue(); // Float32Array in dB
+  if (!spec || spec.length===0) return 0;
+  // Map bin -> freq: bin 0 ~ 0Hz, bin N ~ nyquist (context.sampleRate/2)
+  const ny = Tone.getContext().sampleRate/2;
+  const n = spec.length;
+  const lo = centerHz/Math.pow(2,bwOct/2), hi = centerHz*Math.pow(2,bwOct/2);
+  const i0 = Math.max(0, Math.floor((lo/ny)*n));
+  const i1 = Math.min(n-1, Math.ceil((hi/ny)*n));
+  let acc=0,c=0;
+  for (let i=i0;i<=i1;i++){ acc += Math.pow(10, spec[i]/20); c++; } // back to linear
+  return c? acc/c : 0;
+}
 
-    // -------- Geometry helpers (same as your original, lightly tidied) --------
-    function getFlowerOfLifeCircles(centerX, centerY, baseRadius, rings){
-      const circles=[{x:centerX,y:centerY,radius:baseRadius}];
-      const addRing=(count,dist)=>{for(let i=0;i<count;i++){const a=i*2*Math.PI/count;circles.push({x:centerX+Math.cos(a)*dist,y:centerY+Math.sin(a)*dist,radius:baseRadius});}};
-      if(rings>=1) addRing(6,baseRadius*1.0);
-      if(rings>=2) addRing(12,baseRadius*2.0);
-      if(rings>=3) addRing(18,baseRadius*3.0);
-      if(rings>=4) addRing(24,baseRadius*4.0);
-      if(rings>=5) addRing(30,baseRadius*5.0);
-      return circles;
-    }
+/* ===================== Patterns (Reactive) ===================== */
+let plateFade = 1.0; // damping accumulator
 
-    function getSacredGeometryPattern(cx, cy, baseR, f, comp){
-      if (f<150) return [{x:cx,y:cy,radius:baseR*2}];
-      if (f<300) return getFlowerOfLifeCircles(cx,cy,baseR, Math.min(1, Math.floor(comp/2)));
-      if (f<450) return getFlowerOfLifeCircles(cx,cy,baseR, Math.min(2, Math.floor(comp/2)+1));
-      if (f<600) return getFlowerOfLifeCircles(cx,cy,baseR, Math.min(3, Math.floor(comp/2)+1));
-      if (f<900) return getFlowerOfLifeCircles(cx,cy,baseR*0.8, Math.min(4, comp));
-      return getFlowerOfLifeCircles(cx,cy,baseR*0.7, Math.min(5, comp+1));
-    }
+function drawFlowerOfLife(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle='rgba(10,10,30,1)'; ctx.fillRect(0,0,canvas.width,canvas.height);
 
-    // -------- Rendering --------
-    function drawFlowerOfLife(){
-      ctx.clearRect(0,0,canvas.width,canvas.height);
-      ctx.fillStyle='rgba(10,10,30,1)'; ctx.fillRect(0,0,canvas.width,canvas.height);
+  const rms = getRMS(); // 0..~1
+  const energyMain = bandEnergy(frequency);
+  const shimmer = (energyMain*medium.reactivity + rms*0.5) * 12;
 
-      const baseR = Math.min(canvas.width,canvas.height)*0.08;
-      const circles = getSacredGeometryPattern(centerX,centerY,baseR,frequency,complexity);
+  const baseR = Math.min(canvas.width,canvas.height)*0.08;
+  const circles = getSacredGeometryPattern(centerX,centerY,baseR,frequency,complexity);
 
-      circles.forEach((c,idx)=>{
-        const m=50;
-        if(c.x-c.radius>m && c.x+c.radius<canvas.width-m && c.y-c.radius>m && c.y+c.radius<canvas.height-m){
-          ctx.save();
-          const glow = 0.7 + 0.3*Math.sin(time*animationSpeed + idx*0.2);
-          const colors=[
-            `rgba(0,255,200,${glow*0.8})`,
-            `rgba(100,255,255,${glow*0.6})`,
-            `rgba(200,255,255,${glow*0.4})`
-          ];
-          colors.forEach((col,layer)=>{
-            ctx.strokeStyle=col; ctx.lineWidth=3-layer; ctx.shadowColor=col; ctx.shadowBlur=15+layer*5;
-            ctx.beginPath(); ctx.arc(c.x,c.y,c.radius,0,Math.PI*2); ctx.stroke();
-          });
-          ctx.restore();
-        }
-      });
+  plateFade = plateFade*medium.damping + (1-medium.damping)*(0.6 + rms*0.8);
 
-      const plateR=Math.min(canvas.width,canvas.height)*0.47;
-      ctx.strokeStyle='rgba(100,200,255,.3)'; ctx.lineWidth=2;
-      ctx.beginPath(); ctx.arc(centerX,centerY,plateR,0,Math.PI*2); ctx.stroke();
+  circles.forEach((c,idx)=>{
+    const margin=50;
+    if(c.x-c.radius>margin && c.x+c.radius<canvas.width-margin && c.y-c.radius>margin && c.y+c.radius<canvas.height-margin){
+      ctx.save();
+      const pulse = (0.6 + 0.4*Math.sin(time*animationSpeed + idx*0.3)) * plateFade;
+      const glow = (0.4 + 0.6*rms) * (1 + energyMain*0.6);
+      const rJitter = c.radius * (0.01 + 0.02 * energyMain) * Math.sin(time*animationSpeed*medium.ripple + idx);
 
-      ctx.fillStyle='rgba(255,255,255,.85)'; ctx.font='14px Arial'; ctx.textAlign='center';
-      let info = (frequency<150) ? 'Single Circle - Foundation'
-              : (frequency<300) ? 'Seed of Life - 7 Circles'
-              : (frequency<450) ? 'Flower of Life - 19 Circles'
-              : (frequency<600) ? 'Extended Pattern - 37 Circles'
-              : (frequency<900) ? 'Complex Mandala - 61 Circles'
-              : 'Sacred Geometry - 91+ Circles';
-      ctx.fillText(info, centerX, canvas.height-20);
-    }
-
-    function drawCircularWaves(){
-      ctx.clearRect(0,0,canvas.width,canvas.height);
-      for(let r=10;r<300;r+=5){
-        const alpha = Math.abs(Math.sin((frequency/100)*(r/10) + time*animationSpeed))*(amplitude/100);
-        const width = 1.5 + Math.sin(r/10 + time)*complexity/2;
-        ctx.strokeStyle = `hsla(${180 + frequency/10},70%,60%,${alpha})`;
-        ctx.lineWidth = width;
-        ctx.beginPath(); ctx.arc(centerX,centerY,r,0,Math.PI*2); ctx.stroke();
-      }
-    }
-
-    function drawFractalPattern(){
-      // Guard: keep heavy mode a bit lighter on small devices
-      const w = canvas.width, h = canvas.height;
-      const step = (w*h > 300000) ? 2 : 1; // subsample on big canvases
-      ctx.clearRect(0,0,w,h);
-      const img = ctx.createImageData(w,h);
-      const data = img.data;
-      const maxIt = complexity * 2;
-      for (let x=0; x<w; x+=step){
-        for (let y=0; y<h; y+=step){
-          const nx=(x-centerX)/(amplitude*2), ny=(y-centerY)/(amplitude*2);
-          let zx=nx, zy=ny, it=0, c=frequency/1000;
-          while (zx*zx+zy*zy<4 && it<maxIt){
-            const t = zx*zx - zy*zy + c*Math.cos(time*animationSpeed);
-            zy = 2*zx*zy + c*Math.sin(time*animationSpeed);
-            zx = t; it++;
-          }
-          const idx = (y*w + x)*4; const col = (it/maxIt)*255;
-          data[idx]=col*0.5; data[idx+1]=Math.min(255,col*1.5); data[idx+2]=col*0.8; data[idx+3]=255;
-        }
-      }
-      ctx.putImageData(img,0,0);
-    }
-
-    function hslToRgb(h,s,l){
-      let r,g,b;
-      if(s===0){r=g=b=l}else{
-        const hue2rgb=(p,q,t)=>{ if(t<0)t+=1; if(t>1)t-=1; if(t<1/6)return p+(q-p)*6*t; if(t<1/2)return q; if(t<2/3)return p+(q-p)*(2/3-t)*6; return p; };
-        const q = l<0.5 ? l*(1+s) : l + s - l*s;
-        const p = 2*l - q;
-        r=hue2rgb(p,q,h+1/3); g=hue2rgb(p,q,h); b=hue2rgb(p,q,h-1/3);
-      }
-      return { r:Math.round(r*255), g:Math.round(g*255), b:Math.round(b*255) };
-    }
-
-    function drawInterferencePattern(){
-      ctx.clearRect(0,0,canvas.width,canvas.height);
-      const w=canvas.width,h=canvas.height;
-      const img=ctx.createImageData(w,h), data=img.data;
-      const sources=[
-        {x:centerX-50,y:centerY},
-        {x:centerX+50,y:centerY},
-        {x:centerX,y:centerY-50*Math.sin(Math.PI/3)}
+      const colors=[
+        `rgba(0,255,200,${0.45 + 0.45*glow})`,
+        `rgba(100,255,255,${0.28 + 0.28*glow})`,
+        `rgba(200,255,255,${0.18 + 0.18*glow})`
       ];
-      for(let x=0;x<w;x++){
-        for(let y=0;y<h;y++){
-          let total=0;
-          for(const s of sources){
-            const d = Math.hypot(x-s.x,y-s.y);
-            total += Math.sin((frequency/50)*d + time*animationSpeed) / sources.length;
-          }
-          const intensity = Math.abs(total)*amplitude;
-          const idx=(y*w+x)*4;
-          if(intensity>0.2){
-            const hue = (frequency/10 + time*50)%360;
-            const rgb = hslToRgb(hue/360,0.8,Math.min(1,intensity/100));
-            data[idx]=rgb.r; data[idx+1]=rgb.g; data[idx+2]=rgb.b; data[idx+3]=Math.min(255,intensity*3);
-          } else { data[idx+3]=255; }
-        }
-      }
-      ctx.putImageData(img,0,0);
+      colors.forEach((col,layer)=>{
+        ctx.strokeStyle=col;
+        ctx.lineWidth= (2.8-layer) * (1 + 0.8*pulse);
+        ctx.shadowColor=col; ctx.shadowBlur=15 + layer*7 + glow*20;
+        ctx.beginPath(); ctx.arc(c.x, c.y, c.radius + rJitter, 0, Math.PI*2); ctx.stroke();
+      });
+      ctx.restore();
     }
+  });
 
-    function animate(){
-      time += 0.05;
-      switch(currentPattern){
-        case 'flowerOfLife': drawFlowerOfLife(); break;
-        case 'circular':     drawCircularWaves(); break;
-        case 'fractal':      drawFractalPattern(); break;
-        case 'interference': drawInterferencePattern(); break;
+  const plateR=Math.min(canvas.width,canvas.height)*0.47;
+  ctx.strokeStyle=`rgba(100,200,255,${0.15 + 0.25*plateFade})`;
+  ctx.lineWidth=2;
+  ctx.beginPath(); ctx.arc(centerX,centerY,plateR,0,Math.PI*2); ctx.stroke();
+
+  // Info line
+  ctx.fillStyle='rgba(255,255,255,.85)'; ctx.font='14px Arial'; ctx.textAlign='center';
+  let info = (frequency<150) ? 'Single Circle - Foundation'
+            : (frequency<300) ? 'Seed of Life - 7 Circles'
+            : (frequency<450) ? 'Flower of Life - 19 Circles'
+            : (frequency<600) ? 'Extended Pattern - 37 Circles'
+            : (frequency<900) ? 'Complex Mandala - 61 Circles'
+            : 'Sacred Geometry - 91+ Circles';
+  ctx.fillText(info, centerX, canvas.height-18);
+}
+
+function drawCircularWaves(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  const rms = getRMS();
+  const eMain = bandEnergy(frequency);
+  for(let r=10;r<300;r+=5){
+    const phaseWarp = eMain*0.6*Math.sin((r/25) + time*animationSpeed);
+    const alpha = clamp(Math.abs(Math.sin((frequency/100)*(r/10) + time*animationSpeed + phaseWarp))*(amplitude/100)*(0.5+0.8*rms), 0, 1);
+    const width = 1.3 + Math.sin(r/12 + time)*(complexity/3) + rms*2;
+    ctx.strokeStyle = `hsla(${(180 + frequency/10 + eMain*120)%360},70%,60%,${alpha})`;
+    ctx.lineWidth = width;
+    ctx.beginPath(); ctx.arc(centerX,centerY,r*(1+0.004*eMain),0,Math.PI*2); ctx.stroke();
+  }
+}
+
+function drawFractalPattern(){
+  const w=canvas.width, h=canvas.height;
+  ctx.clearRect(0,0,w,h);
+
+  const rms = getRMS();
+  const centroid = spectralCentroid(); // 0..1 mapped later
+  const step = (w*h>300000)?2:1;
+  const img = ctx.createImageData(w,h), data=img.data;
+  const maxIt = Math.floor((complexity*2) * (0.8 + 1.2*rms));
+  for(let x=0;x<w;x+=step){
+    for(let y=0;y<h;y+=step){
+      const nx=(x-centerX)/(amplitude*2), ny=(y-centerY)/(amplitude*2);
+      let zx=nx, zy=ny, it=0, c=frequency/1000;
+      const s = (0.8 + 0.6*rms);
+      while (zx*zx + zy*zy < 4 && it < maxIt){
+        const t = zx*zx - zy*zy + c*Math.cos(time*animationSpeed*s);
+        zy = 2*zx*zy + c*Math.sin(time*animationSpeed*s);
+        zx = t; it++;
       }
-      animationId = requestAnimationFrame(animate);
+      const idx=(y*w + x)*4;
+      const col = (it/maxIt)*255;
+      // hue mod by centroid (maps high-frequency energy to bluer hues)
+      const hueShift = 60 + 240*centroid;
+      data[idx]   = Math.min(255, col*0.5 + hueShift*0.2);
+      data[idx+1] = Math.min(255, col*1.4);
+      data[idx+2] = Math.min(255, col*0.8 + (1-centroid)*40);
+      data[idx+3] = 255;
     }
-    animate();
+  }
+  ctx.putImageData(img,0,0);
+}
+function spectralCentroid(){
+  const spec = analyser.getValue();
+  if(!spec || !spec.length) return 0;
+  const ny = Tone.getContext().sampleRate/2;
+  let num=0, den=0;
+  for(let i=0;i<spec.length;i++){
+    const f = (i/spec.length)*ny;
+    const lin = Math.pow(10, spec[i]/20); // convert dB to linear
+    num += f*lin; den += lin;
+  }
+  const c = den? num/den : 0;
+  return clamp(c/ny, 0, 1);
+}
 
-    window.addEventListener('beforeunload', ()=>{
-      stopTone();
-      if(animationId) cancelAnimationFrame(animationId);
-    });
+function hslToRgb(h,s,l){
+  let r,g,b;
+  if(s===0){r=g=b=l}else{
+    const hue2rgb=(p,q,t)=>{if(t<0)t+=1;if(t>1)t-=1;if(t<1/6)return p+(q-p)*6*t;if(t<1/2)return q;if(t<2/3)return p+(q-p)*(2/3-t)*6;return p;};
+    const q = l<0.5 ? l*(1+s) : l + s - l*s, p=2*l - q;
+    r=hue2rgb(p,q,h+1/3); g=hue2rgb(p,q,h); b=hue2rgb(p,q,h-1/3);
+  }
+  return {r:Math.round(r*255), g:Math.round(g*255), b:Math.round(b*255)};
+}
 
-    // init labels
-    updateFreqDisplays();
-  </script>
+function drawInterferencePattern(){
+  const w=canvas.width, h=canvas.height;
+  ctx.clearRect(0,0,w,h);
+
+  const rms = getRMS(), eMain = bandEnergy(frequency);
+  const img = ctx.createImageData(w,h), data=img.data;
+  const speed = (0.6 + 1.2*rms)*animationSpeed;
+
+  const sources=[
+    {x:centerX-50,y:centerY},
+    {x:centerX+50,y:centerY},
+    {x:centerX,y:centerY-50*Math.sin(Math.PI/3)}
+  ];
+
+  for(let x=0;x<w;x++){
+    for(let y=0;y<h;y++){
+      let total=0;
+      for(const s of sources){
+        const d = Math.hypot(x-s.x, y-s.y);
+        total += Math.sin((frequency/50)*d + time*speed) / sources.length;
+      }
+      const intensity = Math.abs(total)*amplitude*(0.6 + 0.8*eMain);
+      const idx=(y*w+x)*4;
+      const hue = (frequency/10 + time*40 + eMain*180)%360;
+      const rgb = hslToRgb(hue/360, 0.8, clamp(intensity/120, 0, 1));
+      data[idx]=rgb.r; data[idx+1]=rgb.g; data[idx+2]=rgb.b; data[idx+3]=Math.min(255, intensity*2.5);
+    }
+  }
+  ctx.putImageData(img,0,0);
+}
+
+/* ===================== Animation Loop + Pattern Switching ===================== */
+let currentPatternFn = drawFlowerOfLife;
+function setPattern(p){
+  currentPattern = p;
+  document.querySelectorAll('.pattern-buttons .chip').forEach(b=>b.classList.remove('active'));
+  const el = document.getElementById(p+'Btn'); if (el) el.classList.add('active');
+  currentPatternFn =
+    p==='circular' ? drawCircularWaves :
+    p==='fractal'  ? drawFractalPattern :
+    p==='interference' ? drawInterferencePattern :
+    drawFlowerOfLife;
+}
+function animate(){
+  time += 0.05;
+  currentPatternFn();
+  if (haptics && 'vibrate' in navigator){
+    const rms = getRMS();
+    if (rms>0.2 && Math.random()<0.05) navigator.vibrate(5);
+  }
+  animationId = requestAnimationFrame(animate);
+}
+animate();
+
+/* ===================== Cleanup ===================== */
+window.addEventListener('beforeunload', ()=>{
+  stopTone();
+  if (animationId) cancelAnimationFrame(animationId);
+});
+
+/* ===================== Init Labels ===================== */
+updateFreqDisplays();
+
+</script>
 </body>
 </html>
